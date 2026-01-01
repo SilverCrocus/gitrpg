@@ -10,6 +10,9 @@ coverage/
 .next/
 out/
 
+# Extension compiled output
+extension/out/
+
 # Production
 build/
 dist/
@@ -36,6 +39,15 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Compiled output (keep source, ignore compiled)
+*.js
+*.js.map
+*.d.ts
+*.d.ts.map
+!*.config.js
+!eslint.config.js
+!vitest.config.ts
 
 # IDE
 .idea/

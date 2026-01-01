@@ -60,27 +60,32 @@ export function parseGitLog(logOutput: string): GitCommit[] {
   let i = 0;
   while (i < lines.length) {
     const commitLine = lines[i];
-    if (!commitLine.includes('|')) {
+    if (!commitLine || !commitLine.includes('|')) {
       i++;
       continue;
     }
 
-    const [hash, author, email, dateStr, message] = commitLine.split('|');
+    const parts = commitLine.split('|');
+    const hash = parts[0] ?? '';
+    const author = parts[1] ?? '';
+    const email = parts[2] ?? '';
+    const dateStr = parts[3] ?? '';
+    const message = parts[4] ?? '';
 
     let filesChanged = 0;
     let insertions = 0;
     let deletions = 0;
 
     // Check next line for stats
-    if (i + 1 < lines.length) {
-      const statsLine = lines[i + 1];
+    const statsLine = lines[i + 1];
+    if (statsLine) {
       const filesMatch = statsLine.match(/(\d+) files? changed/);
       const insertMatch = statsLine.match(/(\d+) insertions?\(\+\)/);
       const deleteMatch = statsLine.match(/(\d+) deletions?\(-\)/);
 
-      if (filesMatch) filesChanged = parseInt(filesMatch[1], 10);
-      if (insertMatch) insertions = parseInt(insertMatch[1], 10);
-      if (deleteMatch) deletions = parseInt(deleteMatch[1], 10);
+      if (filesMatch?.[1]) filesChanged = parseInt(filesMatch[1], 10);
+      if (insertMatch?.[1]) insertions = parseInt(insertMatch[1], 10);
+      if (deleteMatch?.[1]) deletions = parseInt(deleteMatch[1], 10);
 
       if (filesMatch || insertMatch || deleteMatch) {
         i++; // Skip stats line

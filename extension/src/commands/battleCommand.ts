@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { generateBattleHTML } from '../webview/battleUI';
 import { BattleAnimationPlayer } from '../webview/battlePlayer';
-import type { BattleAction, CharacterClass } from '../../../src/types';
+import type { BattleAction, CharacterClass } from '../types';
 
 export interface BattleData {
   fighter1: {

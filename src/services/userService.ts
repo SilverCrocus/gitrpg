@@ -12,7 +12,7 @@ export async function createUser(userId: string, email: string, displayName: str
     id: userId,
     email,
     displayName,
-    avatarUrl: undefined,
+    // avatarUrl is optional, omit to leave undefined
     githubAccounts: [],
     activeCharacterId: null,
     gold: 0,

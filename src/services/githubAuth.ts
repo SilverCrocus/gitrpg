@@ -57,14 +57,20 @@ export async function linkAdditionalGitHubAccount(
     throw new Error('Failed to get GitHub access token');
   }
 
-  return {
+  const account: GitHubAccount = {
     id: result.user.providerData[0]?.uid || '',
     username: result.user.displayName || '',
     accessToken: credential.accessToken,
     isEnterprise: !!enterpriseUrl,
-    enterpriseUrl,
     linkedAt: new Date()
   };
+
+  // Only add enterpriseUrl if it's defined
+  if (enterpriseUrl) {
+    account.enterpriseUrl = enterpriseUrl;
+  }
+
+  return account;
 }
 
 export async function signOut(): Promise<void> {

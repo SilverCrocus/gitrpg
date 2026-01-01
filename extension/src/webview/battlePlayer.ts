@@ -1,4 +1,4 @@
-import type { BattleAction } from '../../../src/types';
+import type { BattleAction } from '../types';
 
 export interface BattleAnimationConfig {
   actionDuration: number; // ms per action

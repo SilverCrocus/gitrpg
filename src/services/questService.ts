@@ -27,9 +27,11 @@ export function generateDailyQuests(): Quest[] {
     usedTemplates.add(templateIndex);
 
     const template = DAILY_QUEST_TEMPLATES[templateIndex];
-    const target = Math.floor(
-      Math.random() * (template.targetRange[1] - template.targetRange[0] + 1) + template.targetRange[0]
-    );
+    if (!template) continue; // Guard for strict mode
+
+    const minTarget = template.targetRange[0] ?? 1;
+    const maxTarget = template.targetRange[1] ?? 10;
+    const target = Math.floor(Math.random() * (maxTarget - minTarget + 1) + minTarget);
 
     quests.push({
       id: uuidv4(),
