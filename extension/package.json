@@ -1,0 +1,62 @@
+{
+  "name": "gitrpg",
+  "displayName": "GitRPG",
+  "description": "Turn your coding into an RPG - earn XP, level up characters, battle friends!",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gitrpg.showDashboard",
+        "title": "GitRPG: Show Dashboard"
+      },
+      {
+        "command": "gitrpg.showCharacter",
+        "title": "GitRPG: Show Character"
+      },
+      {
+        "command": "gitrpg.startBattle",
+        "title": "GitRPG: Start Battle"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "gitrpg",
+          "title": "GitRPG",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "gitrpg": [
+        {
+          "type": "webview",
+          "id": "gitrpg.mainView",
+          "name": "GitRPG"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.x",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "dependencies": {
+    "firebase": "^10.7.0"
+  }
+}

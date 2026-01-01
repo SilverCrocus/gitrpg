@@ -1,0 +1,219 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.activate = activate;
+exports.deactivate = deactivate;
+const vscode = __importStar(require("vscode"));
+let mainPanel;
+function activate(context) {
+    console.log('GitRPG extension is now active!');
+    // Register commands
+    const showDashboardCmd = vscode.commands.registerCommand('gitrpg.showDashboard', () => {
+        showMainPanel(context, 'dashboard');
+    });
+    const showCharacterCmd = vscode.commands.registerCommand('gitrpg.showCharacter', () => {
+        showMainPanel(context, 'character');
+    });
+    const startBattleCmd = vscode.commands.registerCommand('gitrpg.startBattle', () => {
+        showMainPanel(context, 'battle');
+    });
+    context.subscriptions.push(showDashboardCmd, showCharacterCmd, startBattleCmd);
+    // Register webview provider for sidebar
+    const provider = new GitRPGViewProvider(context.extensionUri);
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider('gitrpg.mainView', provider));
+}
+function showMainPanel(context, view) {
+    if (mainPanel) {
+        mainPanel.reveal();
+        mainPanel.webview.postMessage({ type: 'navigate', view });
+        return;
+    }
+    mainPanel = vscode.window.createWebviewPanel('gitrpg', 'GitRPG', vscode.ViewColumn.One, {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')]
+    });
+    mainPanel.webview.html = getWebviewContent(mainPanel.webview, context.extensionUri, view);
+    mainPanel.onDidDispose(() => {
+        mainPanel = undefined;
+    });
+    // Handle messages from webview
+    mainPanel.webview.onDidReceiveMessage(message => {
+        switch (message.type) {
+            case 'alert':
+                vscode.window.showInformationMessage(message.text);
+                break;
+            case 'error':
+                vscode.window.showErrorMessage(message.text);
+                break;
+        }
+    }, undefined, context.subscriptions);
+}
+function getWebviewContent(webview, extensionUri, initialView) {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'unsafe-inline'; img-src ${webview.cspSource} data:;">
+  <title>GitRPG</title>
+  <style>
+    body {
+      font-family: var(--vscode-font-family);
+      color: var(--vscode-foreground);
+      background-color: var(--vscode-editor-background);
+      padding: 20px;
+      margin: 0;
+    }
+    h1 { color: var(--vscode-textLink-foreground); }
+    .container { max-width: 800px; margin: 0 auto; }
+    .loading { text-align: center; padding: 40px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="loading">
+      <h1>GitRPG</h1>
+      <p>Loading ${initialView}...</p>
+    </div>
+  </div>
+  <script>
+    const vscode = acquireVsCodeApi();
+    const initialView = '${initialView}';
+
+    window.addEventListener('message', event => {
+      const message = event.data;
+      if (message.type === 'navigate') {
+        // Handle navigation
+        console.log('Navigating to:', message.view);
+      }
+    });
+  </script>
+</body>
+</html>`;
+}
+class GitRPGViewProvider {
+    extensionUri;
+    constructor(extensionUri) {
+        this.extensionUri = extensionUri;
+    }
+    resolveWebviewView(webviewView, context, token) {
+        webviewView.webview.options = {
+            enableScripts: true,
+            localResourceRoots: [this.extensionUri]
+        };
+        webviewView.webview.html = this.getSidebarContent(webviewView.webview);
+    }
+    getSidebarContent(webview) {
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: var(--vscode-font-family);
+      color: var(--vscode-foreground);
+      padding: 10px;
+      margin: 0;
+    }
+    .stat { margin: 8px 0; }
+    .stat-label { font-size: 11px; opacity: 0.7; }
+    .stat-value { font-size: 16px; font-weight: bold; }
+    .character-preview {
+      width: 64px;
+      height: 64px;
+      margin: 10px auto;
+      background: var(--vscode-editor-background);
+      border: 2px solid var(--vscode-textLink-foreground);
+      image-rendering: pixelated;
+    }
+    button {
+      width: 100%;
+      padding: 8px;
+      margin: 4px 0;
+      background: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: var(--vscode-button-hoverBackground);
+    }
+  </style>
+</head>
+<body>
+  <div class="character-preview" id="characterSprite"></div>
+
+  <div class="stat">
+    <div class="stat-label">Level</div>
+    <div class="stat-value" id="level">1</div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-label">XP</div>
+    <div class="stat-value" id="xp">0 / 100</div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-label">Gold</div>
+    <div class="stat-value" id="gold">0</div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-label">Today's Commits</div>
+    <div class="stat-value" id="commits">0</div>
+  </div>
+
+  <button onclick="openDashboard()">Open Dashboard</button>
+  <button onclick="startBattle()">Battle!</button>
+
+  <script>
+    const vscode = acquireVsCodeApi();
+
+    function openDashboard() {
+      vscode.postMessage({ type: 'command', command: 'gitrpg.showDashboard' });
+    }
+
+    function startBattle() {
+      vscode.postMessage({ type: 'command', command: 'gitrpg.startBattle' });
+    }
+  </script>
+</body>
+</html>`;
+    }
+}
+function deactivate() { }
+//# sourceMappingURL=extension.js.map
