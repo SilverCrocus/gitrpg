@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { registerBattleCommand } from './commands/battleCommand';
 
 let mainPanel: vscode.WebviewPanel | undefined;
 
@@ -18,7 +19,10 @@ export function activate(context: vscode.ExtensionContext) {
     showMainPanel(context, 'battle');
   });
 
-  context.subscriptions.push(showDashboardCmd, showCharacterCmd, startBattleCmd);
+  // Register battle command
+  const showBattleCmd = registerBattleCommand(context);
+
+  context.subscriptions.push(showDashboardCmd, showCharacterCmd, startBattleCmd, showBattleCmd);
 
   // Register webview provider for sidebar
   const provider = new GitRPGViewProvider(context.extensionUri);
