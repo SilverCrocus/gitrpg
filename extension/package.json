@@ -22,6 +22,30 @@
       {
         "command": "gitrpg.startBattle",
         "title": "GitRPG: Start Battle"
+      },
+      {
+        "command": "gitrpg.checkCommits",
+        "title": "GitRPG: Check for New Commits"
+      },
+      {
+        "command": "gitrpg.showLog",
+        "title": "GitRPG: Show Tracking Log"
+      },
+      {
+        "command": "gitrpg.setName",
+        "title": "GitRPG: Set Character Name"
+      },
+      {
+        "command": "gitrpg.setClass",
+        "title": "GitRPG: Change Character Class"
+      },
+      {
+        "command": "gitrpg.showStats",
+        "title": "GitRPG: Show Stats"
+      },
+      {
+        "command": "gitrpg.reset",
+        "title": "GitRPG: Reset Progress"
       }
     ],
     "viewsContainers": {

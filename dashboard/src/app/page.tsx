@@ -50,11 +50,11 @@ interface Battle {
 
 // Mock data for demonstration
 const mockCharacter: Character = {
-  name: 'CodeWarrior',
-  class: 'Warrior',
-  level: 5,
-  xp: 350,
-  xpToNextLevel: 500,
+  name: 'SpellWeaver',
+  class: 'Mage',
+  level: 7,
+  xp: 420,
+  xpToNextLevel: 600,
 };
 
 const mockStats: TodayStats = {
