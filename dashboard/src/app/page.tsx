@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { CharacterSprite, CharacterClass } from '@/components/CharacterSprite';
 
 // Types for the dashboard data
 interface Character {
@@ -125,6 +126,7 @@ const mockBattles: Battle[] = [
   },
 ];
 
+
 // Progress Bar Component
 function ProgressBar({ current, max, color = 'purple' }: { current: number; max: number; color?: string }) {
   const percentage = Math.min((current / max) * 100, 100);
@@ -151,15 +153,14 @@ function CharacterCard({ character }: { character: Character }) {
   return (
     <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
       <h2 className="text-xl font-semibold mb-4 text-purple-400">Your Character</h2>
-      <div className="flex items-center space-x-4">
-        <div className="w-24 h-24 bg-gray-700 rounded-lg flex items-center justify-center border-2 border-purple-500">
-          <span className="text-4xl">
-            {character.class === 'Warrior' ? '\\u2694\\ufe0f' :
-             character.class === 'Mage' ? '\\ud83e\\uddd9' :
-             character.class === 'Rogue' ? '\\ud83d\\udc64' : '\\ud83e\\uddd1\\u200d\\ud83d\\udcbb'}
-          </span>
+      <div className="flex flex-col items-center space-y-4">
+        <div className="w-24 h-28 rounded-lg border-2 border-purple-500 overflow-hidden bg-gray-700 flex items-center justify-center">
+          <CharacterSprite
+            characterClass={character.class.toLowerCase() as CharacterClass}
+            size={92}
+          />
         </div>
-        <div className="flex-1">
+        <div className="text-center">
           <p className="text-lg font-bold text-white">{character.name}</p>
           <p className="text-purple-400">Level {character.level} {character.class}</p>
           <div className="mt-2">
