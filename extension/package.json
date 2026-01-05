@@ -66,6 +66,14 @@
       {
         "command": "gitrpg.showFriendCode",
         "title": "GitRPG: Show My Friend Code"
+      },
+      {
+        "command": "gitrpg.challengeBoss",
+        "title": "GitRPG: Challenge Boss with Friend"
+      },
+      {
+        "command": "gitrpg.viewDailyBoss",
+        "title": "GitRPG: View Today's Boss"
       }
     ],
     "viewsContainers": {

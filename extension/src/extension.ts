@@ -6,6 +6,8 @@ import { SupabaseClientService } from './services/supabaseClient';
 import { ProfileSyncService } from './services/profileSyncService';
 import { FriendsService } from './services/friendsService';
 import { PvpBattleService } from './services/pvpBattleService';
+import { CoopBattleService } from './services/coopBattleService';
+import { BOSS_DEFINITIONS, getBossEmoji } from './services/bossService';
 import { registerAuthHandler } from './authHandler';
 
 let mainPanel: vscode.WebviewPanel | undefined;
@@ -16,6 +18,7 @@ let supabaseClient: SupabaseClientService;
 let profileSync: ProfileSyncService;
 let friendsService: FriendsService;
 let pvpBattleService: PvpBattleService;
+let coopBattleService: CoopBattleService;
 
 export async function activate(context: vscode.ExtensionContext) {
   console.log('GitRPG extension is now active!');
@@ -31,6 +34,7 @@ export async function activate(context: vscode.ExtensionContext) {
   profileSync = new ProfileSyncService(supabaseClient, stateManager);
   friendsService = new FriendsService(supabaseClient);
   pvpBattleService = new PvpBattleService(supabaseClient);
+  coopBattleService = new CoopBattleService(supabaseClient);
 
   // Register OAuth callback handler
   registerAuthHandler(context, supabaseClient, profileSync);
@@ -65,6 +69,22 @@ export async function activate(context: vscode.ExtensionContext) {
           }
         } else if (action === 'Decline') {
           await pvpBattleService.declineChallenge(challenge.id);
+        }
+      });
+    });
+
+    // Subscribe to boss challenges
+    coopBattleService.subscribeToChallenges((challenge) => {
+      vscode.window.showInformationMessage(
+        `${getBossEmoji(challenge.bossType)} ${challenge.challengerName} wants to fight ${challenge.bossName} together!`,
+        'Join Battle', 'Decline'
+      ).then(async (action) => {
+        if (action === 'Join Battle') {
+          const result = await coopBattleService.joinLobby(challenge.lobbyId);
+          if (result.success) {
+            vscode.window.showInformationMessage('Joined the boss lobby! Battle starting...');
+            // TODO: Open boss battle webview
+          }
         }
       });
     });
@@ -293,6 +313,71 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   });
 
+  const viewDailyBossCmd = vscode.commands.registerCommand('gitrpg.viewDailyBoss', async () => {
+    if (!supabaseClient.isAuthenticated()) {
+      vscode.window.showWarningMessage('Connect your account first!');
+      return;
+    }
+
+    const bossType = await coopBattleService.getDailyBoss();
+    const boss = BOSS_DEFINITIONS[bossType];
+    const canFight = await coopBattleService.canFightBoss();
+
+    vscode.window.showInformationMessage(
+      `${getBossEmoji(bossType)} Today's Boss: ${boss.name}\n` +
+      `HP: ${boss.baseHp} | ATK: ${boss.baseAttack} | DEF: ${boss.baseDefense}\n` +
+      `${canFight ? 'You can fight!' : 'Already defeated today'}`,
+      canFight ? 'Challenge with Friend' : 'OK'
+    ).then(action => {
+      if (action === 'Challenge with Friend') {
+        vscode.commands.executeCommand('gitrpg.challengeBoss');
+      }
+    });
+  });
+
+  const challengeBossCmd = vscode.commands.registerCommand('gitrpg.challengeBoss', async () => {
+    if (!supabaseClient.isAuthenticated()) {
+      vscode.window.showWarningMessage('Connect your account first!');
+      return;
+    }
+
+    const canFight = await coopBattleService.canFightBoss();
+    if (!canFight) {
+      vscode.window.showWarningMessage('You already defeated today\'s boss!');
+      return;
+    }
+
+    const friends = await friendsService.getFriends();
+    const acceptedFriends = friends.filter(f => f.status === 'accepted');
+
+    if (acceptedFriends.length === 0) {
+      vscode.window.showWarningMessage('Add some friends first to challenge the boss together!');
+      return;
+    }
+
+    const items = acceptedFriends.map(f => ({
+      label: `$(person) ${f.displayName}`,
+      description: `Lv.${f.level} ${f.characterClass}`,
+      friend: f
+    }));
+
+    const selected = await vscode.window.showQuickPick(items, {
+      placeHolder: 'Select a friend to challenge the boss with'
+    });
+
+    if (selected) {
+      const result = await coopBattleService.createBossLobby(selected.friend.id);
+      if (result.success) {
+        vscode.window.showInformationMessage(
+          `Boss challenge sent to ${selected.friend.displayName}! Waiting for them to join...`
+        );
+        // TODO: Open boss battle webview
+      } else {
+        vscode.window.showErrorMessage(result.error || 'Failed to create boss lobby');
+      }
+    }
+  });
+
   context.subscriptions.push(
     showDashboardCmd,
     showCharacterCmd,
@@ -307,7 +392,9 @@ export async function activate(context: vscode.ExtensionContext) {
     connectAccountCmd,
     showFriendsCmd,
     addFriendCmd,
-    showFriendCodeCmd
+    showFriendCodeCmd,
+    viewDailyBossCmd,
+    challengeBossCmd
   );
 
   // Register webview provider for sidebar
