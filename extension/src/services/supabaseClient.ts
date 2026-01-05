@@ -125,7 +125,7 @@ export class SupabaseClientService {
     const { data, error } = await this.client.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: 'vscode://gitrpg.auth-callback',
+        redirectTo: 'vscode://gitrpg.gitrpg/auth-callback',
         scopes: 'read:user',
       },
     });
