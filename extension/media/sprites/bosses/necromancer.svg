@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <!-- Purple magic aura gradient -->
+    <radialGradient id="auraGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#9b4dca" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#6b2d9a" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#3d1a5c" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Staff orb glow -->
+    <radialGradient id="orbGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e066ff"/>
+      <stop offset="40%" stop-color="#9b4dca"/>
+      <stop offset="100%" stop-color="#6b2d9a"/>
+    </radialGradient>
+
+    <!-- Dark robe gradient -->
+    <linearGradient id="robeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a1a3a"/>
+      <stop offset="50%" stop-color="#1a0f24"/>
+      <stop offset="100%" stop-color="#0d0812"/>
+    </linearGradient>
+
+    <!-- Hood shadow -->
+    <linearGradient id="hoodShadow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1a0f24"/>
+      <stop offset="100%" stop-color="#0d0812"/>
+    </linearGradient>
+
+    <!-- Skull bone color -->
+    <linearGradient id="boneGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e8dcc8"/>
+      <stop offset="100%" stop-color="#c4b49a"/>
+    </linearGradient>
+
+    <!-- Purple magic particles filter -->
+    <filter id="magicGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background aura -->
+  <ellipse cx="64" cy="70" rx="45" ry="50" fill="url(#auraGlow)" filter="url(#magicGlow)"/>
+
+  <!-- Floating magic particles -->
+  <g filter="url(#magicGlow)" opacity="0.8">
+    <circle cx="30" cy="40" r="2" fill="#9b4dca"/>
+    <circle cx="98" cy="35" r="1.5" fill="#e066ff"/>
+    <circle cx="25" cy="85" r="1.8" fill="#6b2d9a"/>
+    <circle cx="100" cy="90" r="2" fill="#9b4dca"/>
+    <circle cx="45" cy="25" r="1.2" fill="#e066ff"/>
+    <circle cx="85" cy="20" r="1.5" fill="#9b4dca"/>
+  </g>
+
+  <!-- Dark flowing robe - base -->
+  <path d="M32 65 Q30 85 28 120 L100 120 Q98 85 96 65 Q90 60 64 58 Q38 60 32 65" fill="url(#robeGradient)"/>
+
+  <!-- Robe details/folds -->
+  <path d="M40 70 Q42 95 40 120" stroke="#3d1a5c" stroke-width="1.5" fill="none" opacity="0.6"/>
+  <path d="M55 68 Q54 90 52 120" stroke="#3d1a5c" stroke-width="1" fill="none" opacity="0.5"/>
+  <path d="M75 68 Q76 90 78 120" stroke="#3d1a5c" stroke-width="1" fill="none" opacity="0.5"/>
+  <path d="M88 70 Q86 95 88 120" stroke="#3d1a5c" stroke-width="1.5" fill="none" opacity="0.6"/>
+
+  <!-- Robe bottom tattered edges -->
+  <path d="M28 118 L30 125 L35 118 L40 127 L48 118 L55 124 L62 118 L68 126 L75 118 L82 124 L88 118 L95 127 L100 118" fill="url(#robeGradient)"/>
+
+  <!-- Hood -->
+  <path d="M35 35 Q30 50 32 65 Q38 60 64 58 Q90 60 96 65 Q98 50 93 35 Q85 20 64 18 Q43 20 35 35" fill="url(#hoodShadow)"/>
+
+  <!-- Hood rim -->
+  <path d="M35 35 Q43 20 64 18 Q85 20 93 35" stroke="#2a1a3a" stroke-width="3" fill="none"/>
+
+  <!-- Hood inner shadow -->
+  <ellipse cx="64" cy="45" rx="22" ry="18" fill="#0a0510"/>
+
+  <!-- Skull face -->
+  <g transform="translate(64, 48)">
+    <!-- Skull base -->
+    <ellipse cx="0" cy="0" rx="15" ry="12" fill="url(#boneGradient)"/>
+
+    <!-- Eye sockets -->
+    <ellipse cx="-6" cy="-2" rx="4" ry="5" fill="#0a0510"/>
+    <ellipse cx="6" cy="-2" rx="4" ry="5" fill="#0a0510"/>
+
+    <!-- Glowing purple eyes -->
+    <ellipse cx="-6" cy="-2" rx="2" ry="2.5" fill="#9b4dca" filter="url(#magicGlow)"/>
+    <ellipse cx="6" cy="-2" rx="2" ry="2.5" fill="#9b4dca" filter="url(#magicGlow)"/>
+
+    <!-- Eye highlights -->
+    <circle cx="-5" cy="-3" r="0.8" fill="#e066ff"/>
+    <circle cx="7" cy="-3" r="0.8" fill="#e066ff"/>
+
+    <!-- Nose cavity -->
+    <path d="M-2 3 L0 7 L2 3 Z" fill="#0a0510"/>
+
+    <!-- Teeth -->
+    <rect x="-8" y="8" width="3" height="4" fill="url(#boneGradient)" rx="0.5"/>
+    <rect x="-4" y="8" width="3" height="4" fill="url(#boneGradient)" rx="0.5"/>
+    <rect x="1" y="8" width="3" height="4" fill="url(#boneGradient)" rx="0.5"/>
+    <rect x="5" y="8" width="3" height="4" fill="url(#boneGradient)" rx="0.5"/>
+
+    <!-- Jaw line -->
+    <path d="M-10 8 Q-12 12 -8 14 L8 14 Q12 12 10 8" stroke="#a89880" stroke-width="1" fill="none"/>
+
+    <!-- Cheekbones -->
+    <path d="M-13 0 Q-15 4 -12 8" stroke="#c4b49a" stroke-width="1.5" fill="none"/>
+    <path d="M13 0 Q15 4 12 8" stroke="#c4b49a" stroke-width="1.5" fill="none"/>
+  </g>
+
+  <!-- Left arm/sleeve -->
+  <path d="M32 65 Q20 75 18 90 Q16 95 22 98" fill="url(#robeGradient)"/>
+
+  <!-- Left skeletal hand -->
+  <g transform="translate(20, 100)">
+    <rect x="-3" y="-5" width="2" height="8" fill="url(#boneGradient)" rx="0.5"/>
+    <rect x="0" y="-6" width="2" height="9" fill="url(#boneGradient)" rx="0.5"/>
+    <rect x="3" y="-5" width="2" height="8" fill="url(#boneGradient)" rx="0.5"/>
+    <rect x="6" y="-4" width="2" height="6" fill="url(#boneGradient)" rx="0.5"/>
+  </g>
+
+  <!-- Right arm/sleeve holding staff -->
+  <path d="M96 65 Q105 72 108 85 Q110 95 105 100" fill="url(#robeGradient)"/>
+
+  <!-- Right skeletal hand gripping staff -->
+  <g transform="translate(102, 95)">
+    <rect x="-2" y="-3" width="2" height="6" fill="url(#boneGradient)" rx="0.5"/>
+    <rect x="1" y="-4" width="2" height="7" fill="url(#boneGradient)" rx="0.5"/>
+    <rect x="4" y="-3" width="2" height="6" fill="url(#boneGradient)" rx="0.5"/>
+  </g>
+
+  <!-- Staff -->
+  <g>
+    <!-- Staff shaft -->
+    <rect x="103" y="25" width="4" height="90" fill="#3d2817" rx="2"/>
+    <rect x="104" y="25" width="1.5" height="90" fill="#5a3d25" rx="1"/>
+
+    <!-- Staff head ornament -->
+    <path d="M100 28 Q105 20 105 15 Q105 10 100 8 Q95 6 90 10 Q88 15 92 20 Q95 25 100 28" fill="#2a1a3a" stroke="#3d1a5c" stroke-width="1"/>
+    <path d="M110 28 Q105 20 105 15 Q105 10 110 8 Q115 6 120 10 Q122 15 118 20 Q115 25 110 28" fill="#2a1a3a" stroke="#3d1a5c" stroke-width="1"/>
+
+    <!-- Glowing orb -->
+    <circle cx="105" cy="12" r="8" fill="url(#orbGlow)" filter="url(#magicGlow)"/>
+
+    <!-- Orb inner glow -->
+    <circle cx="105" cy="12" r="5" fill="#e066ff" opacity="0.6"/>
+    <circle cx="103" cy="10" r="2" fill="#fff" opacity="0.5"/>
+
+    <!-- Magic energy wisps from orb -->
+    <path d="M105 4 Q108 0 112 2" stroke="#e066ff" stroke-width="1.5" fill="none" opacity="0.7" filter="url(#magicGlow)"/>
+    <path d="M98 8 Q94 5 92 8" stroke="#9b4dca" stroke-width="1.5" fill="none" opacity="0.7" filter="url(#magicGlow)"/>
+    <path d="M113 15 Q118 14 120 18" stroke="#e066ff" stroke-width="1" fill="none" opacity="0.6" filter="url(#magicGlow)"/>
+  </g>
+
+  <!-- Shoulder spikes/pauldrons -->
+  <path d="M32 60 L25 52 L35 58 Z" fill="#1a0f24"/>
+  <path d="M96 60 L103 52 L93 58 Z" fill="#1a0f24"/>
+
+  <!-- Collar bone decorations -->
+  <circle cx="50" cy="62" r="2" fill="#6b2d9a"/>
+  <circle cx="64" cy="60" r="2.5" fill="#9b4dca" filter="url(#magicGlow)"/>
+  <circle cx="78" cy="62" r="2" fill="#6b2d9a"/>
+
+  <!-- Belt/sash -->
+  <path d="M38 80 Q64 78 90 80" stroke="#3d1a5c" stroke-width="3" fill="none"/>
+  <circle cx="64" cy="79" r="4" fill="#2a1a3a" stroke="#9b4dca" stroke-width="1"/>
+  <circle cx="64" cy="79" r="2" fill="#9b4dca" filter="url(#magicGlow)"/>
+</svg>

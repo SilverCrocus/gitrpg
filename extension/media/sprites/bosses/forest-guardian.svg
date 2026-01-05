@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Forest Guardian - Ancient Tree Spirit Boss -->
+
+  <!-- Definitions for effects -->
+  <defs>
+    <!-- Glow filter for eyes -->
+    <filter id="eyeGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Subtle nature aura -->
+    <filter id="auraGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Bark texture gradient -->
+    <linearGradient id="barkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5D4037"/>
+      <stop offset="50%" style="stop-color:#4E342E"/>
+      <stop offset="100%" style="stop-color:#3E2723"/>
+    </linearGradient>
+
+    <!-- Leaf gradient -->
+    <radialGradient id="leafGradient" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" style="stop-color:#81C784"/>
+      <stop offset="60%" style="stop-color:#4CAF50"/>
+      <stop offset="100%" style="stop-color:#2E7D32"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background aura (optional ambient glow) -->
+  <ellipse cx="64" cy="70" rx="35" ry="45" fill="#4CAF50" opacity="0.15" filter="url(#auraGlow)"/>
+
+  <!-- Roots at base -->
+  <path d="M45 115 Q40 105 35 115 L30 125 L40 120 Q45 118 45 115" fill="#5D4037"/>
+  <path d="M55 118 Q52 110 48 118 L45 128 L55 122 Q58 120 55 118" fill="#4E342E"/>
+  <path d="M73 118 Q76 110 80 118 L83 128 L73 122 Q70 120 73 118" fill="#4E342E"/>
+  <path d="M83 115 Q88 105 93 115 L98 125 L88 120 Q83 118 83 115" fill="#5D4037"/>
+
+  <!-- Main trunk/body -->
+  <path d="M48 115 L45 75 Q44 65 48 55 L52 45 Q54 42 58 42 L70 42 Q74 42 76 45 L80 55 Q84 65 83 75 L80 115 Z"
+        fill="url(#barkGradient)" stroke="#3E2723" stroke-width="1"/>
+
+  <!-- Bark texture lines -->
+  <path d="M52 110 Q54 95 50 80" stroke="#3E2723" stroke-width="1.5" fill="none" opacity="0.6"/>
+  <path d="M64 112 L64 70" stroke="#3E2723" stroke-width="1" fill="none" opacity="0.5"/>
+  <path d="M76 110 Q74 95 78 80" stroke="#3E2723" stroke-width="1.5" fill="none" opacity="0.6"/>
+  <path d="M55 75 Q64 72 73 75" stroke="#3E2723" stroke-width="1" fill="none" opacity="0.4"/>
+  <path d="M53 90 Q64 87 75 90" stroke="#3E2723" stroke-width="1" fill="none" opacity="0.4"/>
+
+  <!-- Left branch arm -->
+  <path d="M45 70 Q35 65 25 55 Q20 50 15 52 L10 48 Q8 45 12 42 L20 38 Q28 35 32 42 L38 55 Q42 62 45 70"
+        fill="url(#barkGradient)" stroke="#3E2723" stroke-width="1"/>
+  <!-- Left arm twigs -->
+  <path d="M18 45 L12 35 M22 42 L18 32 M28 40 L26 30" stroke="#5D4037" stroke-width="2" fill="none"/>
+  <!-- Left arm leaves -->
+  <ellipse cx="12" cy="32" rx="4" ry="6" fill="#4CAF50" transform="rotate(-20 12 32)"/>
+  <ellipse cx="18" cy="28" rx="4" ry="6" fill="#66BB6A" transform="rotate(-10 18 28)"/>
+  <ellipse cx="26" cy="26" rx="4" ry="6" fill="#81C784" transform="rotate(5 26 26)"/>
+
+  <!-- Right branch arm -->
+  <path d="M83 70 Q93 65 103 55 Q108 50 113 52 L118 48 Q120 45 116 42 L108 38 Q100 35 96 42 L90 55 Q86 62 83 70"
+        fill="url(#barkGradient)" stroke="#3E2723" stroke-width="1"/>
+  <!-- Right arm twigs -->
+  <path d="M110 45 L116 35 M106 42 L110 32 M100 40 L102 30" stroke="#5D4037" stroke-width="2" fill="none"/>
+  <!-- Right arm leaves -->
+  <ellipse cx="116" cy="32" rx="4" ry="6" fill="#4CAF50" transform="rotate(20 116 32)"/>
+  <ellipse cx="110" cy="28" rx="4" ry="6" fill="#66BB6A" transform="rotate(10 110 28)"/>
+  <ellipse cx="102" cy="26" rx="4" ry="6" fill="#81C784" transform="rotate(-5 102 26)"/>
+
+  <!-- Head/face area (upper trunk) -->
+  <ellipse cx="64" cy="52" rx="18" ry="14" fill="#5D4037" stroke="#3E2723" stroke-width="1"/>
+
+  <!-- Face bark texture -->
+  <path d="M52 55 Q56 52 52 48" stroke="#3E2723" stroke-width="1" fill="none" opacity="0.5"/>
+  <path d="M76 55 Q72 52 76 48" stroke="#3E2723" stroke-width="1" fill="none" opacity="0.5"/>
+
+  <!-- Glowing eyes -->
+  <ellipse cx="56" cy="52" rx="4" ry="5" fill="#00E676" filter="url(#eyeGlow)"/>
+  <ellipse cx="72" cy="52" rx="4" ry="5" fill="#00E676" filter="url(#eyeGlow)"/>
+  <!-- Eye inner glow -->
+  <ellipse cx="56" cy="51" rx="2" ry="2.5" fill="#B9F6CA"/>
+  <ellipse cx="72" cy="51" rx="2" ry="2.5" fill="#B9F6CA"/>
+  <!-- Eye pupils -->
+  <ellipse cx="57" cy="52" rx="1" ry="2" fill="#1B5E20"/>
+  <ellipse cx="73" cy="52" rx="1" ry="2" fill="#1B5E20"/>
+
+  <!-- Mouth (ancient carved look) -->
+  <path d="M58 60 Q64 63 70 60" stroke="#3E2723" stroke-width="2" fill="none"/>
+
+  <!-- Leaf crown - back layer -->
+  <ellipse cx="40" cy="25" rx="8" ry="12" fill="#388E3C" transform="rotate(-30 40 25)"/>
+  <ellipse cx="50" cy="18" rx="7" ry="11" fill="#43A047" transform="rotate(-15 50 18)"/>
+  <ellipse cx="64" cy="14" rx="8" ry="12" fill="#4CAF50"/>
+  <ellipse cx="78" cy="18" rx="7" ry="11" fill="#43A047" transform="rotate(15 78 18)"/>
+  <ellipse cx="88" cy="25" rx="8" ry="12" fill="#388E3C" transform="rotate(30 88 25)"/>
+
+  <!-- Leaf crown - front layer -->
+  <ellipse cx="45" cy="28" rx="6" ry="10" fill="#66BB6A" transform="rotate(-20 45 28)"/>
+  <ellipse cx="55" cy="22" rx="6" ry="10" fill="#81C784" transform="rotate(-8 55 22)"/>
+  <ellipse cx="64" cy="20" rx="7" ry="11" fill="#A5D6A7"/>
+  <ellipse cx="73" cy="22" rx="6" ry="10" fill="#81C784" transform="rotate(8 73 22)"/>
+  <ellipse cx="83" cy="28" rx="6" ry="10" fill="#66BB6A" transform="rotate(20 83 28)"/>
+
+  <!-- Small accent leaves -->
+  <ellipse cx="35" cy="32" rx="4" ry="6" fill="#4CAF50" transform="rotate(-40 35 32)"/>
+  <ellipse cx="93" cy="32" rx="4" ry="6" fill="#4CAF50" transform="rotate(40 93 32)"/>
+  <ellipse cx="64" cy="8" rx="5" ry="8" fill="#C8E6C9"/>
+
+  <!-- Nature energy particles -->
+  <circle cx="30" cy="60" r="2" fill="#00E676" opacity="0.7"/>
+  <circle cx="98" cy="65" r="1.5" fill="#00E676" opacity="0.6"/>
+  <circle cx="25" cy="80" r="1.5" fill="#69F0AE" opacity="0.5"/>
+  <circle cx="103" cy="85" r="2" fill="#69F0AE" opacity="0.6"/>
+  <circle cx="40" cy="95" r="1" fill="#00E676" opacity="0.4"/>
+  <circle cx="88" cy="100" r="1" fill="#00E676" opacity="0.4"/>
+
+  <!-- Moss/lichen details on body -->
+  <ellipse cx="50" cy="85" rx="3" ry="2" fill="#81C784" opacity="0.6"/>
+  <ellipse cx="78" cy="95" rx="4" ry="2" fill="#A5D6A7" opacity="0.5"/>
+  <ellipse cx="55" cy="100" rx="2" ry="1.5" fill="#66BB6A" opacity="0.5"/>
+</svg>

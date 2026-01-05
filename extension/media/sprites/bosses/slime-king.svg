@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <!-- Slime body gradient - blue/green -->
+    <radialGradient id="slimeGradient" cx="50%" cy="40%" r="60%" fx="35%" fy="30%">
+      <stop offset="0%" stop-color="#7FFFAA"/>
+      <stop offset="40%" stop-color="#40E0D0"/>
+      <stop offset="100%" stop-color="#1E90FF"/>
+    </radialGradient>
+
+    <!-- Glossy highlight gradient -->
+    <radialGradient id="glossHighlight" cx="30%" cy="25%" r="40%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.9)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+
+    <!-- Crown gold gradient -->
+    <linearGradient id="crownGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="50%" stop-color="#FFA500"/>
+      <stop offset="100%" stop-color="#B8860B"/>
+    </linearGradient>
+
+    <!-- Crown jewel gradient -->
+    <radialGradient id="jewelRed" cx="50%" cy="30%" r="50%">
+      <stop offset="0%" stop-color="#FF6B6B"/>
+      <stop offset="100%" stop-color="#8B0000"/>
+    </radialGradient>
+
+    <!-- Shadow for depth -->
+    <radialGradient id="shadowGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(0,0,0,0.3)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Ground shadow -->
+  <ellipse cx="64" cy="118" rx="45" ry="8" fill="url(#shadowGradient)"/>
+
+  <!-- Main slime body - large blob -->
+  <ellipse cx="64" cy="78" rx="52" ry="42" fill="url(#slimeGradient)" stroke="#1565C0" stroke-width="2"/>
+
+  <!-- Slime body top bulge -->
+  <ellipse cx="64" cy="55" rx="42" ry="30" fill="url(#slimeGradient)"/>
+
+  <!-- Small decorative blobs on sides -->
+  <circle cx="22" cy="90" r="12" fill="url(#slimeGradient)" stroke="#1565C0" stroke-width="1.5"/>
+  <circle cx="106" cy="90" r="12" fill="url(#slimeGradient)" stroke="#1565C0" stroke-width="1.5"/>
+
+  <!-- Glossy highlight on body -->
+  <ellipse cx="45" cy="55" rx="22" ry="16" fill="url(#glossHighlight)"/>
+
+  <!-- Secondary small highlight -->
+  <ellipse cx="80" cy="48" rx="8" ry="6" fill="rgba(255,255,255,0.5)"/>
+
+  <!-- Crown base -->
+  <rect x="34" y="28" width="60" height="14" rx="2" fill="url(#crownGold)" stroke="#8B6914" stroke-width="1.5"/>
+
+  <!-- Crown points -->
+  <polygon points="34,28 44,8 54,28" fill="url(#crownGold)" stroke="#8B6914" stroke-width="1.5"/>
+  <polygon points="54,28 64,4 74,28" fill="url(#crownGold)" stroke="#8B6914" stroke-width="1.5"/>
+  <polygon points="74,28 84,8 94,28" fill="url(#crownGold)" stroke="#8B6914" stroke-width="1.5"/>
+
+  <!-- Crown jewels -->
+  <circle cx="44" cy="18" r="4" fill="url(#jewelRed)" stroke="#5C0000" stroke-width="1"/>
+  <circle cx="64" cy="14" r="5" fill="url(#jewelRed)" stroke="#5C0000" stroke-width="1"/>
+  <circle cx="84" cy="18" r="4" fill="url(#jewelRed)" stroke="#5C0000" stroke-width="1"/>
+
+  <!-- Crown base jewels -->
+  <circle cx="44" cy="35" r="3" fill="#4169E1" stroke="#1E3A8A" stroke-width="0.5"/>
+  <circle cx="64" cy="35" r="3" fill="#4169E1" stroke="#1E3A8A" stroke-width="0.5"/>
+  <circle cx="84" cy="35" r="3" fill="#4169E1" stroke="#1E3A8A" stroke-width="0.5"/>
+
+  <!-- Crown highlight -->
+  <rect x="36" y="30" width="25" height="3" rx="1" fill="rgba(255,255,255,0.4)"/>
+
+  <!-- Eyes - cute but imposing -->
+  <ellipse cx="48" cy="68" rx="10" ry="12" fill="white" stroke="#1565C0" stroke-width="1"/>
+  <ellipse cx="80" cy="68" rx="10" ry="12" fill="white" stroke="#1565C0" stroke-width="1"/>
+
+  <!-- Pupils - slightly menacing downward look -->
+  <ellipse cx="50" cy="71" rx="5" ry="6" fill="#1A1A2E"/>
+  <ellipse cx="82" cy="71" rx="5" ry="6" fill="#1A1A2E"/>
+
+  <!-- Eye highlights -->
+  <circle cx="47" cy="66" r="2.5" fill="white"/>
+  <circle cx="79" cy="66" r="2.5" fill="white"/>
+
+  <!-- Eyebrows - slightly angry/imposing -->
+  <path d="M38 56 Q48 52 58 58" stroke="#1565C0" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M70 58 Q80 52 90 56" stroke="#1565C0" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Mouth - confident smirk -->
+  <path d="M52 88 Q64 96 76 88" stroke="#1565C0" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Cheek blush for cute factor -->
+  <ellipse cx="35" cy="78" rx="6" ry="4" fill="rgba(255,150,150,0.4)"/>
+  <ellipse cx="93" cy="78" rx="6" ry="4" fill="rgba(255,150,150,0.4)"/>
+
+  <!-- Sparkle effects for glossy appearance -->
+  <g fill="white">
+    <polygon points="20,45 22,50 27,50 23,53 25,58 20,55 15,58 17,53 13,50 18,50" opacity="0.8"/>
+    <polygon points="105,55 106.5,58 110,58 107.5,60 108.5,63 105,61 101.5,63 102.5,60 100,58 103.5,58" opacity="0.6"/>
+  </g>
+</svg>

@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <!-- Dark purple aura gradient for sword -->
+    <linearGradient id="swordAura" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a0a2e"/>
+      <stop offset="50%" style="stop-color:#4a1a6b"/>
+      <stop offset="100%" style="stop-color:#7b2d9e"/>
+    </linearGradient>
+    <!-- Glowing effect for eyes -->
+    <filter id="eyeGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Dark aura around the knight -->
+    <filter id="darkAura" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Sword glow effect -->
+    <filter id="swordGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background shadow aura -->
+  <ellipse cx="64" cy="110" rx="35" ry="8" fill="#1a0a2e" opacity="0.6"/>
+
+  <!-- Dark cape/cloak -->
+  <path d="M40 55 L30 110 L64 105 L98 110 L88 55 Z" fill="#0d0d0d" filter="url(#darkAura)"/>
+  <path d="M42 58 L34 105 L64 100 L94 105 L86 58 Z" fill="#1a1a2e"/>
+
+  <!-- Body armor - torso -->
+  <rect x="44" y="50" width="40" height="35" fill="#1a1a1a"/>
+  <rect x="46" y="52" width="36" height="31" fill="#2d2d3d"/>
+  <!-- Armor details -->
+  <rect x="50" y="55" width="28" height="4" fill="#1a1a1a"/>
+  <rect x="50" y="62" width="28" height="4" fill="#1a1a1a"/>
+  <rect x="50" y="69" width="28" height="4" fill="#1a1a1a"/>
+  <rect x="50" y="76" width="28" height="4" fill="#1a1a1a"/>
+
+  <!-- Shoulder pauldrons -->
+  <ellipse cx="38" cy="52" rx="12" ry="8" fill="#1a1a1a"/>
+  <ellipse cx="38" cy="52" rx="10" ry="6" fill="#2d2d3d"/>
+  <ellipse cx="38" cy="52" rx="6" ry="3" fill="#3d3d4d"/>
+
+  <ellipse cx="90" cy="52" rx="12" ry="8" fill="#1a1a1a"/>
+  <ellipse cx="90" cy="52" rx="10" ry="6" fill="#2d2d3d"/>
+  <ellipse cx="90" cy="52" rx="6" ry="3" fill="#3d3d4d"/>
+
+  <!-- Arms -->
+  <rect x="26" y="54" width="12" height="30" fill="#1a1a1a"/>
+  <rect x="28" y="56" width="8" height="26" fill="#2d2d3d"/>
+
+  <rect x="90" y="54" width="12" height="30" fill="#1a1a1a"/>
+  <rect x="92" y="56" width="8" height="26" fill="#2d2d3d"/>
+
+  <!-- Gauntlets -->
+  <rect x="24" y="80" width="16" height="10" fill="#1a1a1a"/>
+  <rect x="26" y="82" width="12" height="6" fill="#3d3d4d"/>
+
+  <rect x="88" y="80" width="16" height="10" fill="#1a1a1a"/>
+  <rect x="90" y="82" width="12" height="6" fill="#3d3d4d"/>
+
+  <!-- Helmet -->
+  <rect x="46" y="18" width="36" height="36" fill="#1a1a1a"/>
+  <rect x="48" y="20" width="32" height="32" fill="#2d2d3d"/>
+
+  <!-- Helmet visor/face plate -->
+  <rect x="50" y="30" width="28" height="18" fill="#0d0d0d"/>
+
+  <!-- Helmet crest/horn -->
+  <polygon points="64,4 58,18 70,18" fill="#1a1a1a"/>
+  <polygon points="64,6 60,18 68,18" fill="#3d3d4d"/>
+
+  <!-- Glowing red eyes -->
+  <ellipse cx="55" cy="38" rx="4" ry="3" fill="#ff0000" filter="url(#eyeGlow)"/>
+  <ellipse cx="73" cy="38" rx="4" ry="3" fill="#ff0000" filter="url(#eyeGlow)"/>
+  <!-- Eye highlights -->
+  <ellipse cx="55" cy="38" rx="2" ry="1.5" fill="#ff4444"/>
+  <ellipse cx="73" cy="38" rx="2" ry="1.5" fill="#ff4444"/>
+  <circle cx="54" cy="37" r="1" fill="#ffaaaa"/>
+  <circle cx="72" cy="37" r="1" fill="#ffaaaa"/>
+
+  <!-- Legs/greaves -->
+  <rect x="48" y="85" width="12" height="25" fill="#1a1a1a"/>
+  <rect x="50" y="87" width="8" height="21" fill="#2d2d3d"/>
+
+  <rect x="68" y="85" width="12" height="25" fill="#1a1a1a"/>
+  <rect x="70" y="87" width="8" height="21" fill="#2d2d3d"/>
+
+  <!-- Boots -->
+  <rect x="46" y="106" width="16" height="8" fill="#1a1a1a"/>
+  <rect x="66" y="106" width="16" height="8" fill="#1a1a1a"/>
+
+  <!-- SWORD with dark/purple aura -->
+  <g filter="url(#swordGlow)">
+    <!-- Sword aura glow -->
+    <rect x="6" y="10" width="8" height="70" fill="#7b2d9e" opacity="0.3"/>
+    <rect x="4" y="8" width="12" height="74" fill="#4a1a6b" opacity="0.2"/>
+
+    <!-- Sword blade -->
+    <polygon points="10,8 8,75 12,75" fill="#4a4a5a"/>
+    <polygon points="10,10 9,73 11,73" fill="#6a6a7a"/>
+    <line x1="10" y1="12" x2="10" y2="70" stroke="#8a8a9a" stroke-width="1"/>
+
+    <!-- Sword tip -->
+    <polygon points="10,4 8,12 12,12" fill="#5a5a6a"/>
+
+    <!-- Sword crossguard -->
+    <rect x="2" y="73" width="16" height="6" fill="#2d1a3d"/>
+    <rect x="4" y="74" width="12" height="4" fill="#4a2a5d"/>
+
+    <!-- Sword handle -->
+    <rect x="8" y="79" width="4" height="12" fill="#1a0a2e"/>
+    <rect x="7" y="81" width="6" height="2" fill="#3d2a4d"/>
+    <rect x="7" y="85" width="6" height="2" fill="#3d2a4d"/>
+
+    <!-- Sword pommel -->
+    <circle cx="10" cy="93" r="4" fill="#2d1a3d"/>
+    <circle cx="10" cy="93" r="2" fill="#7b2d9e"/>
+  </g>
+
+  <!-- Purple energy wisps around sword -->
+  <ellipse cx="8" cy="30" rx="3" ry="6" fill="#7b2d9e" opacity="0.5">
+    <animate attributeName="opacity" values="0.5;0.2;0.5" dur="2s" repeatCount="indefinite"/>
+  </ellipse>
+  <ellipse cx="14" cy="50" rx="2" ry="4" fill="#9b4dbe" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="1.5s" repeatCount="indefinite"/>
+  </ellipse>
+  <ellipse cx="6" cy="60" rx="2" ry="5" fill="#6b1d8e" opacity="0.6">
+    <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1.8s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <!-- Belt with skull buckle -->
+  <rect x="44" y="82" width="40" height="6" fill="#1a1a1a"/>
+  <rect x="58" y="81" width="12" height="8" fill="#2d2d3d"/>
+  <circle cx="64" cy="85" r="3" fill="#4a4a5a"/>
+
+  <!-- Additional armor trim details -->
+  <line x1="46" y1="50" x2="46" y2="85" stroke="#3d3d4d" stroke-width="1"/>
+  <line x1="82" y1="50" x2="82" y2="85" stroke="#3d3d4d" stroke-width="1"/>
+</svg>
