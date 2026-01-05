@@ -94,7 +94,6 @@ export class CoopBattleService {
     }
 
     const bossType = await this.getDailyBoss();
-    const bossDefinition = BOSS_DEFINITIONS[bossType];
 
     // Get player stats to scale boss
     const { data: players } = await client
