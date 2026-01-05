@@ -1,7 +1,7 @@
-import { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import { SupabaseClientService } from './supabaseClient';
 import { BOSS_DEFINITIONS, createBossInstance, BossInstance, BOSS_REWARDS } from './bossService';
-import { BattleEngine, BattleFighter } from './battleEngine';
+import { BattleFighter } from './battleEngine';
 
 export interface BossBattle {
   id: string;
@@ -99,14 +99,16 @@ export class CoopBattleService {
     // Get player stats to scale boss
     const { data: players } = await client
       .from('users')
-      .select('level, stats_max_hp')
+      .select('id, level, stats_max_hp')
       .in('id', [user.id, friendId]);
 
     const avgLevel = players ? players.reduce((sum, p) => sum + p.level, 0) / players.length : 1;
     const boss = createBossInstance(bossType, avgLevel);
 
-    const player1Hp = players?.find(p => true)?.stats_max_hp || 100;
-    const player2Hp = players?.find((_, i) => i === 1)?.stats_max_hp || 100;
+    const player1Data = players?.find(p => p.id === user.id);
+    const player2Data = players?.find(p => p.id === friendId);
+    const player1Hp = player1Data?.stats_max_hp || 100;
+    const player2Hp = player2Data?.stats_max_hp || 100;
 
     const { data, error } = await client
       .from('boss_battles')
@@ -296,16 +298,21 @@ export class CoopBattleService {
     const client = this.supabase.getClient();
 
     // Get current battle log
-    const { data: current } = await client
+    const { data: current, error: fetchError } = await client
       .from('boss_battles')
       .select('battle_log')
       .eq('id', lobbyId)
       .single();
 
+    if (fetchError) {
+      console.error('Error fetching battle log:', fetchError);
+      throw new Error('Failed to fetch battle state');
+    }
+
     const currentLog = (current?.battle_log || []) as BattleLogEntry[];
     const updatedLog = [...currentLog, ...newLogEntries];
 
-    await client
+    const { error: updateError } = await client
       .from('boss_battles')
       .update({
         boss_current_hp: bossHp,
@@ -314,6 +321,11 @@ export class CoopBattleService {
         battle_log: updatedLog
       })
       .eq('id', lobbyId);
+
+    if (updateError) {
+      console.error('Error updating battle state:', updateError);
+      throw new Error('Failed to update battle state');
+    }
   }
 
   async completeBattle(

@@ -1,5 +1,3 @@
-import type { CharacterStats } from '../types';
-
 export interface BossDefinition {
   id: string;
   name: string;
