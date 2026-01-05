@@ -162,26 +162,26 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Social commands
   const connectAccountCmd = vscode.commands.registerCommand('gitrpg.connectAccount', async () => {
-    if (!supabaseClient.isConfigured()) {
-      const url = await vscode.window.showInputBox({
-        prompt: 'Enter your Supabase URL',
-        placeHolder: 'https://xxx.supabase.co'
+    if (supabaseClient.isAuthenticated()) {
+      const profile = await profileSync.getMyProfile();
+      vscode.window.showInformationMessage(
+        `Already connected! Friend code: ${profile?.friend_code || 'Unknown'}`,
+        'Copy Code'
+      ).then(async (action) => {
+        if (action === 'Copy Code' && profile?.friend_code) {
+          await vscode.env.clipboard.writeText(profile.friend_code);
+          vscode.window.showInformationMessage('Friend code copied!');
+        }
       });
-      const key = await vscode.window.showInputBox({
-        prompt: 'Enter your Supabase Anon Key',
-        placeHolder: 'eyJ...'
-      });
-
-      if (url && key) {
-        await supabaseClient.configure(url, key);
-      } else {
-        return;
-      }
+      return;
     }
 
     const authResult = await supabaseClient.signInWithGitHub();
     if (authResult?.url) {
       vscode.env.openExternal(vscode.Uri.parse(authResult.url));
+      vscode.window.showInformationMessage('Opening GitHub login in browser...');
+    } else {
+      vscode.window.showErrorMessage('Failed to start authentication. Please try again.');
     }
   });
 

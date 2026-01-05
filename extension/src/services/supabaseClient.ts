@@ -41,8 +41,10 @@ export interface DbBattle {
   completed_at: string | null;
 }
 
-const SUPABASE_URL_KEY = 'gitrpg.supabaseUrl';
-const SUPABASE_ANON_KEY_KEY = 'gitrpg.supabaseAnonKey';
+// Supabase configuration (anon key is public, safe to include)
+const SUPABASE_URL = 'https://cjohlwagftjsihexyzzw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqb2hsd2FnZnRqc2loZXh5enp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc1NjU4OTAsImV4cCI6MjA4MzE0MTg5MH0.zMUNiTg5Un4GODtVXz9GP1jF6Kk9ltoGPLVoGZsVXUQ';
+
 const ACCESS_TOKEN_KEY = 'gitrpg.accessToken';
 const REFRESH_TOKEN_KEY = 'gitrpg.refreshToken';
 
@@ -56,12 +58,8 @@ export class SupabaseClientService {
   }
 
   async initialize(): Promise<boolean> {
-    const url = this.context.globalState.get<string>(SUPABASE_URL_KEY);
-    const anonKey = this.context.globalState.get<string>(SUPABASE_ANON_KEY_KEY);
-
-    if (!url || !anonKey) {
-      return false;
-    }
+    const url = SUPABASE_URL;
+    const anonKey = SUPABASE_ANON_KEY;
 
     this.client = createClient(url, anonKey, {
       auth: {
@@ -92,12 +90,6 @@ export class SupabaseClientService {
     }
 
     return false;
-  }
-
-  async configure(url: string, anonKey: string): Promise<void> {
-    await this.context.globalState.update(SUPABASE_URL_KEY, url);
-    await this.context.globalState.update(SUPABASE_ANON_KEY_KEY, anonKey);
-    await this.initialize();
   }
 
   isConfigured(): boolean {
