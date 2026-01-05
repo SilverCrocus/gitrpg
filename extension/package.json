@@ -50,6 +50,22 @@
       {
         "command": "gitrpg.reset",
         "title": "GitRPG: Reset Progress"
+      },
+      {
+        "command": "gitrpg.connectAccount",
+        "title": "GitRPG: Connect Account"
+      },
+      {
+        "command": "gitrpg.showFriends",
+        "title": "GitRPG: Show Friends"
+      },
+      {
+        "command": "gitrpg.addFriend",
+        "title": "GitRPG: Add Friend"
+      },
+      {
+        "command": "gitrpg.showFriendCode",
+        "title": "GitRPG: Show My Friend Code"
       }
     ],
     "viewsContainers": {
@@ -71,6 +87,8 @@
       ]
     }
   },
+  "extensionDependencies": [],
+  "publisher": "gitrpg",
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",

@@ -2,18 +2,73 @@ import * as vscode from 'vscode';
 import { registerBattleCommand } from './commands/battleCommand';
 import { LocalStateManager, CharacterData, TodayStats } from './services/localStateManager';
 import { GitTrackingService } from './services/gitTrackingService';
+import { SupabaseClientService } from './services/supabaseClient';
+import { ProfileSyncService } from './services/profileSyncService';
+import { FriendsService } from './services/friendsService';
+import { PvpBattleService } from './services/pvpBattleService';
+import { registerAuthHandler } from './authHandler';
 
 let mainPanel: vscode.WebviewPanel | undefined;
 let statusBarItem: vscode.StatusBarItem;
 let stateManager: LocalStateManager;
 let gitTracker: GitTrackingService;
+let supabaseClient: SupabaseClientService;
+let profileSync: ProfileSyncService;
+let friendsService: FriendsService;
+let pvpBattleService: PvpBattleService;
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   console.log('GitRPG extension is now active!');
 
   // Initialize state manager and git tracker
   stateManager = new LocalStateManager(context);
   gitTracker = new GitTrackingService(stateManager);
+
+  // Initialize social services
+  supabaseClient = new SupabaseClientService(context);
+  await supabaseClient.initialize();
+
+  profileSync = new ProfileSyncService(supabaseClient, stateManager);
+  friendsService = new FriendsService(supabaseClient);
+  pvpBattleService = new PvpBattleService(supabaseClient);
+
+  // Register OAuth callback handler
+  registerAuthHandler(context, supabaseClient, profileSync);
+
+  // Subscribe to notifications if authenticated
+  if (supabaseClient.isAuthenticated()) {
+    friendsService.subscribeToNotifications((friend) => {
+      vscode.window.showInformationMessage(
+        `Friend request from ${friend.displayName}!`,
+        'Accept', 'Decline'
+      ).then(async (action) => {
+        if (action === 'Accept') {
+          await friendsService.acceptFriendRequest(friend.id);
+          vscode.window.showInformationMessage(`You are now friends with ${friend.displayName}!`);
+        } else if (action === 'Decline') {
+          await friendsService.declineFriendRequest(friend.id);
+        }
+      });
+    });
+
+    pvpBattleService.subscribeToChallenges((challenge) => {
+      vscode.window.showInformationMessage(
+        `Battle challenge from ${challenge.challengerName} (Lv.${challenge.challengerLevel})!`,
+        'Accept', 'Decline'
+      ).then(async (action) => {
+        if (action === 'Accept') {
+          const result = await pvpBattleService.acceptChallenge(challenge.id);
+          if (result) {
+            vscode.window.showInformationMessage(
+              `Battle complete! ${result.winner.name} wins!`
+            );
+          }
+        } else if (action === 'Decline') {
+          await pvpBattleService.declineChallenge(challenge.id);
+        }
+      });
+    });
+  }
 
   // Create status bar item (right side)
   statusBarItem = vscode.window.createStatusBarItem(
@@ -25,9 +80,13 @@ export function activate(context: vscode.ExtensionContext) {
   statusBarItem.show();
   context.subscriptions.push(statusBarItem);
 
-  // Update status bar when state changes
-  stateManager.onStateChange(() => {
+  // Update status bar when state changes and sync profile to cloud
+  stateManager.onStateChange(async () => {
     updateStatusBar();
+    // Sync profile to cloud when character updates
+    if (supabaseClient.isAuthenticated()) {
+      await profileSync.syncProfileToCloud();
+    }
   });
 
   // Register commands
@@ -101,6 +160,139 @@ export function activate(context: vscode.ExtensionContext) {
     );
   });
 
+  // Social commands
+  const connectAccountCmd = vscode.commands.registerCommand('gitrpg.connectAccount', async () => {
+    if (!supabaseClient.isConfigured()) {
+      const url = await vscode.window.showInputBox({
+        prompt: 'Enter your Supabase URL',
+        placeHolder: 'https://xxx.supabase.co'
+      });
+      const key = await vscode.window.showInputBox({
+        prompt: 'Enter your Supabase Anon Key',
+        placeHolder: 'eyJ...'
+      });
+
+      if (url && key) {
+        await supabaseClient.configure(url, key);
+      } else {
+        return;
+      }
+    }
+
+    const authResult = await supabaseClient.signInWithGitHub();
+    if (authResult?.url) {
+      vscode.env.openExternal(vscode.Uri.parse(authResult.url));
+    }
+  });
+
+  const showFriendsCmd = vscode.commands.registerCommand('gitrpg.showFriends', async () => {
+    if (!supabaseClient.isAuthenticated()) {
+      vscode.window.showWarningMessage('Connect your account first!', 'Connect').then((action) => {
+        if (action === 'Connect') {
+          vscode.commands.executeCommand('gitrpg.connectAccount');
+        }
+      });
+      return;
+    }
+
+    const friends = await friendsService.getFriends();
+    const accepted = friends.filter(f => f.status === 'accepted');
+    const pending = friends.filter(f => f.status === 'pending' && !f.isRequester);
+
+    if (friends.length === 0) {
+      vscode.window.showInformationMessage('No friends yet! Add friends with their friend code.');
+      return;
+    }
+
+    const items = [
+      ...accepted.map(f => ({
+        label: `$(person) ${f.displayName}`,
+        description: `Lv.${f.level} ${f.characterClass}`,
+        detail: f.friendCode,
+        friend: f,
+      })),
+      ...pending.map(f => ({
+        label: `$(mail) ${f.displayName} (pending)`,
+        description: `Lv.${f.level} ${f.characterClass}`,
+        detail: 'Click to accept/decline',
+        friend: f,
+      })),
+    ];
+
+    const selected = await vscode.window.showQuickPick(items, {
+      placeHolder: 'Your friends'
+    });
+
+    if (selected) {
+      if (selected.friend.status === 'pending') {
+        const action = await vscode.window.showQuickPick(['Accept', 'Decline'], {
+          placeHolder: `Friend request from ${selected.friend.displayName}`
+        });
+        if (action === 'Accept') {
+          await friendsService.acceptFriendRequest(selected.friend.id);
+          vscode.window.showInformationMessage(`You are now friends with ${selected.friend.displayName}!`);
+        } else if (action === 'Decline') {
+          await friendsService.declineFriendRequest(selected.friend.id);
+        }
+      } else {
+        const action = await vscode.window.showQuickPick(['Challenge to Battle', 'Remove Friend'], {
+          placeHolder: selected.friend.displayName
+        });
+        if (action === 'Challenge to Battle') {
+          const result = await pvpBattleService.challengeFriend(selected.friend.id);
+          if (result.success) {
+            vscode.window.showInformationMessage(`Challenge sent to ${selected.friend.displayName}!`);
+          } else {
+            vscode.window.showErrorMessage(result.error || 'Failed to send challenge');
+          }
+        } else if (action === 'Remove Friend') {
+          await friendsService.removeFriend(selected.friend.id);
+          vscode.window.showInformationMessage(`Removed ${selected.friend.displayName} from friends`);
+        }
+      }
+    }
+  });
+
+  const addFriendCmd = vscode.commands.registerCommand('gitrpg.addFriend', async () => {
+    if (!supabaseClient.isAuthenticated()) {
+      vscode.window.showWarningMessage('Connect your account first!');
+      return;
+    }
+
+    const friendCode = await vscode.window.showInputBox({
+      prompt: 'Enter friend code',
+      placeHolder: 'GRPG-XXXX-XXXX'
+    });
+
+    if (friendCode) {
+      const result = await friendsService.sendFriendRequest(friendCode);
+      if (result.success) {
+        vscode.window.showInformationMessage('Friend request sent!');
+      } else {
+        vscode.window.showErrorMessage(result.error || 'Failed to send request');
+      }
+    }
+  });
+
+  const showFriendCodeCmd = vscode.commands.registerCommand('gitrpg.showFriendCode', async () => {
+    if (!supabaseClient.isAuthenticated()) {
+      vscode.window.showWarningMessage('Connect your account first!');
+      return;
+    }
+
+    const code = await profileSync.getMyFriendCode();
+    if (code) {
+      const action = await vscode.window.showInformationMessage(
+        `Your friend code: ${code}`,
+        'Copy to Clipboard'
+      );
+      if (action === 'Copy to Clipboard') {
+        await vscode.env.clipboard.writeText(code);
+        vscode.window.showInformationMessage('Friend code copied!');
+      }
+    }
+  });
+
   context.subscriptions.push(
     showDashboardCmd,
     showCharacterCmd,
@@ -111,7 +303,11 @@ export function activate(context: vscode.ExtensionContext) {
     setNameCmd,
     setClassCmd,
     resetCmd,
-    showStatsCmd
+    showStatsCmd,
+    connectAccountCmd,
+    showFriendsCmd,
+    addFriendCmd,
+    showFriendCodeCmd
   );
 
   // Register webview provider for sidebar
