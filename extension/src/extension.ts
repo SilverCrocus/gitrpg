@@ -938,4 +938,15 @@ export function deactivate() {
   if (gitTracker) {
     gitTracker.stop();
   }
+  // Clean up social service subscriptions
+  if (coopBattleService) {
+    coopBattleService.unsubscribeFromChallenges();
+    coopBattleService.unsubscribeFromBattle();
+  }
+  if (pvpBattleService) {
+    pvpBattleService.unsubscribeFromChallenges();
+  }
+  if (friendsService) {
+    friendsService.unsubscribeFromNotifications();
+  }
 }
