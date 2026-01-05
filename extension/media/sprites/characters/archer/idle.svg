@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <style>
+    :root {
+      --tunic-primary: #2D5A2D;
+      --tunic-secondary: #1E3D1E;
+      --tunic-highlight: #3D7A3D;
+      --skin: #D4A574;
+      --skin-shadow: #B8956A;
+      --hair: #8B6914;
+      --hair-highlight: #A68A3D;
+      --bow-wood: #6B4423;
+      --bow-highlight: #8B5A33;
+      --leather: #5C4033;
+      --leather-dark: #3D2A22;
+    }
+  </style>
+
+  <!-- Shadow/Ground -->
+  <ellipse cx="32" cy="60" rx="12" ry="3" fill="rgba(0,0,0,0.2)"/>
+
+  <!-- BODY LAYER -->
+  <g id="body">
+    <!-- Legs -->
+    <rect x="24" y="46" width="6" height="12" fill="var(--tunic-secondary)"/>
+    <rect x="34" y="46" width="6" height="12" fill="var(--tunic-secondary)"/>
+    <!-- Boots -->
+    <rect x="23" y="54" width="8" height="5" rx="1" fill="var(--leather)"/>
+    <rect x="33" y="54" width="8" height="5" rx="1" fill="var(--leather)"/>
+    <!-- Boot tops -->
+    <rect x="24" y="52" width="6" height="3" fill="var(--leather-dark)"/>
+    <rect x="34" y="52" width="6" height="3" fill="var(--leather-dark)"/>
+  </g>
+
+  <!-- TUNIC LAYER -->
+  <g id="tunic">
+    <!-- Torso -->
+    <rect x="22" y="30" width="20" height="18" rx="2" fill="var(--tunic-primary)"/>
+    <!-- Tunic detail -->
+    <rect x="30" y="32" width="4" height="12" fill="var(--tunic-highlight)"/>
+    <!-- Belt -->
+    <rect x="22" y="44" width="20" height="4" fill="var(--leather)"/>
+    <rect x="30" y="44" width="4" height="4" fill="var(--leather-dark)"/>
+    <!-- Shoulders (light padding) -->
+    <rect x="18" y="30" width="6" height="5" rx="1" fill="var(--tunic-primary)"/>
+    <rect x="40" y="30" width="6" height="5" rx="1" fill="var(--tunic-primary)"/>
+    <!-- Shoulder trim -->
+    <rect x="18" y="30" width="6" height="2" fill="var(--tunic-highlight)"/>
+    <rect x="40" y="30" width="6" height="2" fill="var(--tunic-highlight)"/>
+  </g>
+
+  <!-- ARMS -->
+  <g id="arms">
+    <!-- Left arm (bow arm) -->
+    <rect x="16" y="34" width="5" height="12" fill="var(--tunic-secondary)"/>
+    <!-- Right arm -->
+    <rect x="43" y="34" width="5" height="12" fill="var(--tunic-secondary)"/>
+    <!-- Bracer (left) -->
+    <rect x="15" y="40" width="5" height="6" fill="var(--leather)"/>
+    <!-- Glove (right) -->
+    <rect x="44" y="44" width="5" height="4" rx="1" fill="var(--leather)"/>
+    <!-- Hands -->
+    <rect x="15" y="44" width="4" height="4" rx="1" fill="var(--skin)"/>
+    <rect x="44" y="44" width="4" height="4" rx="1" fill="var(--skin)"/>
+  </g>
+
+  <!-- HEAD LAYER -->
+  <g id="head">
+    <!-- Hair back -->
+    <ellipse cx="32" cy="16" rx="10" ry="8" fill="var(--hair)"/>
+    <!-- Face -->
+    <ellipse cx="32" cy="20" rx="8" ry="7" fill="var(--skin)"/>
+    <!-- Hair front/bangs -->
+    <path d="M24 14 Q28 12 32 12 Q36 12 40 14 L40 16 Q36 18 32 18 Q28 18 24 16 Z" fill="var(--hair)"/>
+    <!-- Hair highlight -->
+    <path d="M26 14 Q30 13 34 14" fill="none" stroke="var(--hair-highlight)" stroke-width="2"/>
+    <!-- Eyes -->
+    <rect x="27" y="18" width="3" height="3" rx="1" fill="#2D2D2D"/>
+    <rect x="34" y="18" width="3" height="3" rx="1" fill="#2D2D2D"/>
+    <!-- Eye shine -->
+    <rect x="28" y="18" width="1" height="1" fill="#FFFFFF"/>
+    <rect x="35" y="18" width="1" height="1" fill="#FFFFFF"/>
+    <!-- Nose -->
+    <rect x="31" y="21" width="2" height="2" fill="var(--skin-shadow)"/>
+    <!-- Slight smile -->
+    <rect x="29" y="24" width="6" height="1" rx="1" fill="var(--skin-shadow)"/>
+  </g>
+
+  <!-- QUIVER -->
+  <g id="quiver">
+    <rect x="44" y="26" width="6" height="16" rx="1" fill="var(--leather)"/>
+    <!-- Arrow feathers sticking out -->
+    <rect x="45" y="22" width="1" height="6" fill="#E8E8E8"/>
+    <rect x="47" y="23" width="1" height="5" fill="#E8E8E8"/>
+    <rect x="49" y="24" width="1" height="4" fill="#E8E8E8"/>
+    <!-- Quiver strap -->
+    <rect x="42" y="30" width="10" height="2" fill="var(--leather-dark)" transform="rotate(-30 47 31)"/>
+  </g>
+
+  <!-- BOW -->
+  <g id="bow">
+    <!-- Bow limbs -->
+    <path d="M6 20 Q2 32 6 44" fill="none" stroke="var(--bow-wood)" stroke-width="3"/>
+    <!-- Bow string -->
+    <line x1="6" y1="20" x2="6" y2="44" stroke="#DDD" stroke-width="1"/>
+    <!-- Bow grip -->
+    <rect x="4" y="30" width="4" height="6" rx="1" fill="var(--bow-highlight)"/>
+    <!-- Bow tips -->
+    <circle cx="6" cy="20" r="2" fill="var(--bow-wood)"/>
+    <circle cx="6" cy="44" r="2" fill="var(--bow-wood)"/>
+  </g>
+</svg>

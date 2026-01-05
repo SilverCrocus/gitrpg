@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <style>
+    :root {
+      --leather-primary: #3D3D3D;
+      --leather-secondary: #2A2A2A;
+      --leather-highlight: #4D4D4D;
+      --skin: #D4A574;
+      --skin-shadow: #B8956A;
+      --hood: #1A1A1A;
+      --hood-highlight: #333333;
+      --dagger-blade: #C0C0C0;
+      --dagger-highlight: #E8E8E8;
+      --dagger-handle: #4A3728;
+    }
+  </style>
+
+  <!-- Shadow/Ground -->
+  <ellipse cx="32" cy="60" rx="12" ry="3" fill="rgba(0,0,0,0.2)"/>
+
+  <!-- BODY LAYER -->
+  <g id="body">
+    <!-- Legs -->
+    <rect x="24" y="46" width="6" height="12" fill="var(--leather-secondary)"/>
+    <rect x="34" y="46" width="6" height="12" fill="var(--leather-secondary)"/>
+    <!-- Boots -->
+    <rect x="23" y="54" width="8" height="5" rx="1" fill="var(--leather-primary)"/>
+    <rect x="33" y="54" width="8" height="5" rx="1" fill="var(--leather-primary)"/>
+    <!-- Boot straps -->
+    <rect x="24" y="52" width="6" height="1" fill="var(--leather-highlight)"/>
+    <rect x="34" y="52" width="6" height="1" fill="var(--leather-highlight)"/>
+  </g>
+
+  <!-- ARMOR LAYER -->
+  <g id="armor">
+    <!-- Torso (light leather) -->
+    <rect x="22" y="30" width="20" height="18" rx="2" fill="var(--leather-primary)"/>
+    <!-- Chest straps -->
+    <rect x="24" y="32" width="3" height="14" fill="var(--leather-secondary)" transform="rotate(-15 25.5 39)"/>
+    <rect x="37" y="32" width="3" height="14" fill="var(--leather-secondary)" transform="rotate(15 38.5 39)"/>
+    <!-- Belt with pouches -->
+    <rect x="22" y="44" width="20" height="4" fill="var(--leather-secondary)"/>
+    <rect x="24" y="44" width="4" height="4" fill="var(--leather-highlight)"/>
+    <rect x="36" y="44" width="4" height="4" fill="var(--leather-highlight)"/>
+    <!-- Shoulders (small) -->
+    <rect x="18" y="30" width="6" height="5" rx="1" fill="var(--leather-primary)"/>
+    <rect x="40" y="30" width="6" height="5" rx="1" fill="var(--leather-primary)"/>
+  </g>
+
+  <!-- ARMS -->
+  <g id="arms">
+    <!-- Left arm -->
+    <rect x="16" y="34" width="5" height="12" fill="var(--leather-secondary)"/>
+    <!-- Right arm -->
+    <rect x="43" y="34" width="5" height="12" fill="var(--leather-secondary)"/>
+    <!-- Gloves/wraps -->
+    <rect x="15" y="44" width="5" height="4" rx="1" fill="var(--leather-primary)"/>
+    <rect x="44" y="44" width="5" height="4" rx="1" fill="var(--leather-primary)"/>
+  </g>
+
+  <!-- HOOD/HEAD LAYER -->
+  <g id="hood">
+    <!-- Hood (deep) -->
+    <path d="M20 12 Q20 6 32 6 Q44 6 44 12 L44 28 L20 28 Z" fill="var(--hood)"/>
+    <!-- Hood edge -->
+    <path d="M22 14 Q22 10 32 10 Q38 10 38 14" fill="none" stroke="var(--hood-highlight)" stroke-width="2"/>
+    <!-- Face (mostly shadowed) -->
+    <ellipse cx="32" cy="22" rx="7" ry="6" fill="var(--skin-shadow)"/>
+    <!-- Lower face visible -->
+    <rect x="27" y="24" width="10" height="4" rx="1" fill="var(--skin)"/>
+    <!-- Eyes (glinting from shadow) -->
+    <rect x="27" y="19" width="3" height="2" fill="#1A1A1A"/>
+    <rect x="34" y="19" width="3" height="2" fill="#1A1A1A"/>
+    <!-- Eye glint -->
+    <rect x="28" y="19" width="1" height="1" fill="#FFFFFF"/>
+    <rect x="35" y="19" width="1" height="1" fill="#FFFFFF"/>
+    <!-- Mask/cloth -->
+    <rect x="26" y="24" width="12" height="3" fill="var(--leather-secondary)"/>
+  </g>
+
+  <!-- LEFT DAGGER -->
+  <g id="dagger-left">
+    <!-- Blade -->
+    <polygon points="8,38 12,38 10,28" fill="var(--dagger-blade)"/>
+    <!-- Blade highlight -->
+    <polygon points="9,37 10,37 10,30" fill="var(--dagger-highlight)"/>
+    <!-- Guard -->
+    <rect x="6" y="38" width="8" height="2" rx="1" fill="var(--dagger-handle)"/>
+    <!-- Handle -->
+    <rect x="8" y="40" width="4" height="6" fill="var(--dagger-handle)"/>
+    <!-- Pommel -->
+    <circle cx="10" cy="48" r="2" fill="#666"/>
+  </g>
+
+  <!-- RIGHT DAGGER -->
+  <g id="dagger-right">
+    <!-- Blade -->
+    <polygon points="52,38 56,38 54,28" fill="var(--dagger-blade)"/>
+    <!-- Blade highlight -->
+    <polygon points="53,37 54,37 54,30" fill="var(--dagger-highlight)"/>
+    <!-- Guard -->
+    <rect x="50" y="38" width="8" height="2" rx="1" fill="var(--dagger-handle)"/>
+    <!-- Handle -->
+    <rect x="52" y="40" width="4" height="6" fill="var(--dagger-handle)"/>
+    <!-- Pommel -->
+    <circle cx="54" cy="48" r="2" fill="#666"/>
+  </g>
+</svg>
