@@ -9,7 +9,7 @@ export function registerAuthHandler(
 ): void {
   const handler = vscode.window.registerUriHandler({
     async handleUri(uri: vscode.Uri) {
-      // URI format: vscode://gitrpg.gitrpg/auth-callback#access_token=...
+      // URI format: vscode://hivindiyagama.gitrpg/auth-callback#access_token=...
       if (uri.path !== '/auth-callback') {
         return;
       }

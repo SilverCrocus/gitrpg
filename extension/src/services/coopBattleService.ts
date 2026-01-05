@@ -154,6 +154,138 @@ export class CoopBattleService {
     return { success: true, battle: data as BossBattle };
   }
 
+  async getPendingBossInvites(): Promise<BossChallenge[]> {
+    const client = this.supabase.getClient();
+    const user = this.supabase.getCurrentUser();
+    if (!user) return [];
+
+    const { data, error } = await client
+      .from('boss_battles')
+      .select(`
+        id,
+        player1_id,
+        boss_type,
+        created_at,
+        challenger:users!boss_battles_player1_id_fkey(display_name)
+      `)
+      .eq('player2_id', user.id)
+      .eq('status', 'lobby')
+      .order('created_at', { ascending: false });
+
+    if (error || !data) {
+      console.error('Error fetching boss invites:', error);
+      return [];
+    }
+
+    return data.map((b: any) => ({
+      lobbyId: b.id,
+      challengerId: b.player1_id,
+      challengerName: b.challenger?.display_name || 'Unknown',
+      bossType: b.boss_type,
+      bossName: BOSS_DEFINITIONS[b.boss_type]?.name || 'Unknown Boss'
+    }));
+  }
+
+  async runFullBossBattle(lobbyId: string): Promise<{
+    success: boolean;
+    won?: boolean;
+    battleLog?: BattleLogEntry[];
+    rewards?: { xp: number; gold: number };
+    error?: string;
+  }> {
+    const client = this.supabase.getClient();
+    const user = this.supabase.getCurrentUser();
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    // Get battle data
+    const { data: battle, error: battleError } = await client
+      .from('boss_battles')
+      .select(`
+        *,
+        player1:users!boss_battles_player1_id_fkey(*),
+        player2:users!boss_battles_player2_id_fkey(*)
+      `)
+      .eq('id', lobbyId)
+      .single();
+
+    if (battleError || !battle) {
+      return { success: false, error: 'Battle not found' };
+    }
+
+    // Create boss instance
+    const boss = createBossInstance(battle.boss_type, Math.max(battle.player1.level, battle.player2?.level || 1));
+    boss.currentHp = battle.boss_max_hp;
+
+    // Create player fighters
+    const player1: BattleFighter = {
+      id: battle.player1.id,
+      name: battle.player1.display_name,
+      class: battle.player1.character_class.toLowerCase() as any,
+      level: battle.player1.level,
+      stats: {
+        maxHp: battle.player1.stats_max_hp,
+        attack: battle.player1.stats_attack,
+        defense: battle.player1.stats_defense,
+        speed: battle.player1.stats_speed,
+        critChance: battle.player1.stats_crit,
+        critDamage: 1.5,
+      },
+      currentHp: battle.player1_current_hp,
+    };
+
+    const player2: BattleFighter | null = battle.player2 ? {
+      id: battle.player2.id,
+      name: battle.player2.display_name,
+      class: battle.player2.character_class.toLowerCase() as any,
+      level: battle.player2.level,
+      stats: {
+        maxHp: battle.player2.stats_max_hp,
+        attack: battle.player2.stats_attack,
+        defense: battle.player2.stats_defense,
+        speed: battle.player2.stats_speed,
+        critChance: battle.player2.stats_crit,
+        critDamage: 1.5,
+      },
+      currentHp: battle.player2_current_hp,
+    } : null;
+
+    // Start battle
+    await this.startBattle(lobbyId);
+
+    // Run battle turns
+    const allLogEntries: BattleLogEntry[] = [];
+    let turn = 1;
+    const MAX_TURNS = 50;
+
+    while (turn <= MAX_TURNS) {
+      const turnEntries = await this.executeBattleTurn(lobbyId, player1, player2, boss, turn);
+      allLogEntries.push(...turnEntries);
+
+      // Check win/lose conditions
+      if (boss.currentHp <= 0) {
+        // Players won!
+        const winnerIds = [player1.id];
+        if (player2) winnerIds.push(player2.id);
+        const rewards = await this.completeBattle(lobbyId, true, winnerIds, !!player2);
+        await this.updateBattleState(lobbyId, boss.currentHp, player1.currentHp, player2?.currentHp || null, allLogEntries);
+        return { success: true, won: true, battleLog: allLogEntries, rewards };
+      }
+
+      if (player1.currentHp <= 0 && (!player2 || player2.currentHp <= 0)) {
+        // Boss won
+        const rewards = await this.completeBattle(lobbyId, false, [], !!player2);
+        await this.updateBattleState(lobbyId, boss.currentHp, player1.currentHp, player2?.currentHp || null, allLogEntries);
+        return { success: true, won: false, battleLog: allLogEntries, rewards };
+      }
+
+      turn++;
+    }
+
+    // Timeout - boss wins by default
+    const rewards = await this.completeBattle(lobbyId, false, [], !!player2);
+    return { success: true, won: false, battleLog: allLogEntries, rewards };
+  }
+
   async setReady(lobbyId: string): Promise<boolean> {
     const client = this.supabase.getClient();
 

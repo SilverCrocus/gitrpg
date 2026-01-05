@@ -8,6 +8,8 @@ import { FriendsService } from './services/friendsService';
 import { PvpBattleService } from './services/pvpBattleService';
 import { CoopBattleService } from './services/coopBattleService';
 import { BOSS_DEFINITIONS, getBossEmoji } from './services/bossService';
+import { QuestService } from './services/questService';
+import { WorkerService } from './services/workerService';
 import { registerAuthHandler } from './authHandler';
 
 let mainPanel: vscode.WebviewPanel | undefined;
@@ -19,6 +21,8 @@ let profileSync: ProfileSyncService;
 let friendsService: FriendsService;
 let pvpBattleService: PvpBattleService;
 let coopBattleService: CoopBattleService;
+let questService: QuestService;
+let workerService: WorkerService;
 
 export async function activate(context: vscode.ExtensionContext) {
   console.log('GitRPG extension is now active!');
@@ -35,6 +39,8 @@ export async function activate(context: vscode.ExtensionContext) {
   friendsService = new FriendsService(supabaseClient);
   pvpBattleService = new PvpBattleService(supabaseClient);
   coopBattleService = new CoopBattleService(supabaseClient);
+  questService = new QuestService(supabaseClient);
+  workerService = new WorkerService(supabaseClient);
 
   // Register OAuth callback handler
   registerAuthHandler(context, supabaseClient, profileSync);
@@ -80,10 +86,20 @@ export async function activate(context: vscode.ExtensionContext) {
         'Join Battle', 'Decline'
       ).then(async (action) => {
         if (action === 'Join Battle') {
-          const result = await coopBattleService.joinLobby(challenge.lobbyId);
-          if (result.success) {
-            vscode.window.showInformationMessage('Joined the boss lobby! Battle starting...');
-            // TODO: Open boss battle webview
+          vscode.window.showInformationMessage('Joining boss battle...');
+          const battleResult = await coopBattleService.runFullBossBattle(challenge.lobbyId);
+          if (battleResult.success) {
+            const outcome = battleResult.won ? 'Victory!' : 'Defeat!';
+            const rewardText = battleResult.rewards
+              ? ` Rewards: ${battleResult.rewards.xp} XP, ${battleResult.rewards.gold} Gold`
+              : '';
+            vscode.window.showInformationMessage(`Boss Battle ${outcome}${rewardText}`);
+            if (battleResult.battleLog && battleResult.battleLog.length > 0) {
+              const totalTurns = Math.max(...battleResult.battleLog.map(e => e.turn));
+              vscode.window.showInformationMessage(`Battle lasted ${totalTurns} turns!`);
+            }
+          } else {
+            vscode.window.showErrorMessage(battleResult.error || 'Failed to run boss battle');
           }
         }
       });
@@ -378,6 +394,124 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   });
 
+  // Quest commands
+  const showQuestsCmd = vscode.commands.registerCommand('gitrpg.showQuests', async () => {
+    if (!supabaseClient.isAuthenticated()) {
+      vscode.window.showWarningMessage('Connect your account first to see quests!', 'Connect').then((action) => {
+        if (action === 'Connect') {
+          vscode.commands.executeCommand('gitrpg.connectAccount');
+        }
+      });
+      return;
+    }
+
+    // Refresh daily quests if needed
+    const quests = await questService.refreshDailyQuestsIfNeeded();
+
+    if (quests.length === 0) {
+      vscode.window.showInformationMessage('No active quests. Check back tomorrow for new daily quests!');
+      return;
+    }
+
+    const items = quests.map(q => ({
+      label: `${q.status === 'completed' ? '✅' : '📋'} ${q.title}`,
+      description: `${q.requirement_current}/${q.requirement_target} - ${q.reward_xp} XP, ${q.reward_gold} Gold`,
+      detail: q.description,
+      quest: q
+    }));
+
+    const selected = await vscode.window.showQuickPick(items, {
+      placeHolder: 'Your Daily Quests'
+    });
+
+    if (selected && selected.quest.status === 'completed') {
+      const claim = await vscode.window.showQuickPick(['Claim Reward', 'Cancel'], {
+        placeHolder: `Claim ${selected.quest.reward_xp} XP and ${selected.quest.reward_gold} Gold?`
+      });
+
+      if (claim === 'Claim Reward') {
+        const rewards = await questService.claimQuestReward(selected.quest.id);
+        if (rewards) {
+          vscode.window.showInformationMessage(`Claimed ${rewards.xp} XP and ${rewards.gold} Gold!`);
+        }
+      }
+    }
+  });
+
+  // Worker commands
+  const showWorkersCmd = vscode.commands.registerCommand('gitrpg.showWorkers', async () => {
+    if (!supabaseClient.isAuthenticated()) {
+      vscode.window.showWarningMessage('Connect your account first to manage workers!', 'Connect').then((action) => {
+        if (action === 'Connect') {
+          vscode.commands.executeCommand('gitrpg.connectAccount');
+        }
+      });
+      return;
+    }
+
+    const summary = await workerService.getWorkerSummary();
+    const workers = await workerService.getWorkers();
+
+    const options = [
+      `📊 Summary: ${summary.workerCount} workers, ${summary.totalGoldPerHour}/hr, ${summary.pendingGold} pending`,
+      `💰 Collect Gold (${summary.pendingGold} gold)`,
+      `🛒 Buy Worker (${summary.nextWorkerCost} gold)`,
+      ...workers.map((w, i) => `⚙️ Worker ${i + 1} - Lv.${w.level} (${w.gold_per_hour}/hr) [Upgrade: ${workerService.calculateUpgradeCost(w.level)} gold]`)
+    ];
+
+    const selected = await vscode.window.showQuickPick(options, {
+      placeHolder: 'Worker Management'
+    });
+
+    if (selected?.startsWith('💰 Collect')) {
+      const result = await workerService.collectAllGold();
+      if (result.success) {
+        vscode.window.showInformationMessage(`Collected ${result.goldCollected} gold!`);
+      } else {
+        vscode.window.showErrorMessage(result.error || 'Failed to collect gold');
+      }
+    } else if (selected?.startsWith('🛒 Buy')) {
+      const result = await workerService.purchaseWorker();
+      if (result.success) {
+        vscode.window.showInformationMessage('Worker purchased!');
+      } else {
+        vscode.window.showErrorMessage(result.error || 'Failed to purchase worker');
+      }
+    } else if (selected?.startsWith('⚙️ Worker')) {
+      const workerIndex = parseInt(selected.split(' ')[1]) - 1;
+      const worker = workers[workerIndex];
+      if (worker) {
+        const upgradeCost = workerService.calculateUpgradeCost(worker.level);
+        const action = await vscode.window.showQuickPick([`Upgrade (${upgradeCost} gold)`, 'Cancel'], {
+          placeHolder: `Worker ${workerIndex + 1} - Level ${worker.level}`
+        });
+
+        if (action?.startsWith('Upgrade')) {
+          const result = await workerService.upgradeWorker(worker.id);
+          if (result.success) {
+            vscode.window.showInformationMessage(`Worker upgraded to level ${result.worker?.level}!`);
+          } else {
+            vscode.window.showErrorMessage(result.error || 'Failed to upgrade worker');
+          }
+        }
+      }
+    }
+  });
+
+  const collectGoldCmd = vscode.commands.registerCommand('gitrpg.collectGold', async () => {
+    if (!supabaseClient.isAuthenticated()) {
+      vscode.window.showWarningMessage('Connect your account first!');
+      return;
+    }
+
+    const result = await workerService.collectAllGold();
+    if (result.success) {
+      vscode.window.showInformationMessage(`Collected ${result.goldCollected} gold from workers!`);
+    } else {
+      vscode.window.showErrorMessage(result.error || 'Failed to collect gold');
+    }
+  });
+
   context.subscriptions.push(
     showDashboardCmd,
     showCharacterCmd,
@@ -394,7 +528,10 @@ export async function activate(context: vscode.ExtensionContext) {
     addFriendCmd,
     showFriendCodeCmd,
     viewDailyBossCmd,
-    challengeBossCmd
+    challengeBossCmd,
+    showQuestsCmd,
+    showWorkersCmd,
+    collectGoldCmd
   );
 
   // Register webview provider for sidebar
@@ -467,13 +604,127 @@ function showMainPanel(context: vscode.ExtensionContext, view: string) {
           break;
         case 'checkCommits':
           await gitTracker.forceCheck();
+          vscode.window.showInformationMessage('Commits checked!');
           break;
+        case 'requestNameChange': {
+          const name = await vscode.window.showInputBox({
+            prompt: 'Enter your character name',
+            value: stateManager.getCharacter().name
+          });
+          if (name) {
+            await stateManager.setCharacterName(name);
+            vscode.window.showInformationMessage(`Character renamed to ${name}!`);
+          }
+          break;
+        }
+        case 'requestClassChange': {
+          const classes = ['Warrior', 'Mage', 'Rogue', 'Archer'];
+          const selected = await vscode.window.showQuickPick(classes, {
+            placeHolder: 'Choose your class'
+          });
+          if (selected) {
+            await stateManager.setCharacterClass(selected as any);
+            vscode.window.showInformationMessage(`Class changed to ${selected}!`);
+          }
+          break;
+        }
         case 'setName':
           await stateManager.setCharacterName(message.name);
           break;
         case 'setClass':
           await stateManager.setCharacterClass(message.class);
           break;
+        case 'showQuests':
+          vscode.commands.executeCommand('gitrpg.showQuests');
+          break;
+        case 'manageWorkers':
+          vscode.commands.executeCommand('gitrpg.showWorkers');
+          break;
+        case 'collectGold':
+          vscode.commands.executeCommand('gitrpg.collectGold');
+          break;
+        case 'claimQuest': {
+          const rewards = await questService.claimQuestReward(message.questId);
+          if (rewards) {
+            vscode.window.showInformationMessage(`Claimed ${rewards.xp} XP and ${rewards.gold} Gold!`);
+            if (mainPanel) {
+              await sendStateToWebview(mainPanel);
+            }
+          }
+          break;
+        }
+        case 'acceptFriend': {
+          const accepted = await friendsService.acceptFriendRequest(message.friendId);
+          if (accepted) {
+            vscode.window.showInformationMessage('Friend request accepted!');
+            if (mainPanel) {
+              await sendStateToWebview(mainPanel);
+            }
+          }
+          break;
+        }
+        case 'declineFriend': {
+          await friendsService.declineFriendRequest(message.friendId);
+          vscode.window.showInformationMessage('Friend request declined.');
+          if (mainPanel) {
+            await sendStateToWebview(mainPanel);
+          }
+          break;
+        }
+        case 'acceptPvp': {
+          const result = await pvpBattleService.acceptChallenge(message.battleId);
+          if (result) {
+            const resultText = result.winner.name === stateManager.getCharacter().name ? 'You won!' : 'You lost!';
+            vscode.window.showInformationMessage(`Battle complete! ${resultText} Winner: ${result.winner.name}`);
+            if (mainPanel) {
+              await sendStateToWebview(mainPanel);
+            }
+          }
+          break;
+        }
+        case 'declinePvp': {
+          await pvpBattleService.declineChallenge(message.battleId);
+          vscode.window.showInformationMessage('PvP challenge declined.');
+          if (mainPanel) {
+            await sendStateToWebview(mainPanel);
+          }
+          break;
+        }
+        case 'joinBoss': {
+          vscode.window.showInformationMessage('Joining boss battle...');
+          const battleResult = await coopBattleService.runFullBossBattle(message.lobbyId);
+          if (battleResult.success) {
+            const outcome = battleResult.won ? 'Victory!' : 'Defeat!';
+            const rewardText = battleResult.rewards
+              ? ` Rewards: ${battleResult.rewards.xp} XP, ${battleResult.rewards.gold} Gold`
+              : '';
+            vscode.window.showInformationMessage(`Boss Battle ${outcome}${rewardText}`);
+            // Show battle summary
+            if (battleResult.battleLog && battleResult.battleLog.length > 0) {
+              const totalTurns = Math.max(...battleResult.battleLog.map(e => e.turn));
+              vscode.window.showInformationMessage(`Battle lasted ${totalTurns} turns!`);
+            }
+          } else {
+            vscode.window.showErrorMessage(battleResult.error || 'Failed to run boss battle');
+          }
+          if (mainPanel) {
+            await sendStateToWebview(mainPanel);
+          }
+          break;
+        }
+        case 'declineBoss': {
+          // Mark the lobby as abandoned
+          const client = supabaseClient.getClient();
+          await client
+            .from('boss_battles')
+            .update({ status: 'abandoned' })
+            .eq('id', message.lobbyId);
+          vscode.window.showInformationMessage('Boss raid declined.');
+          if (mainPanel) {
+            await sendStateToWebview(mainPanel);
+          }
+          break;
+        }
       }
     },
     undefined,
@@ -481,20 +732,66 @@ function showMainPanel(context: vscode.ExtensionContext, view: string) {
   );
 }
 
-function sendStateToWebview(panel: vscode.WebviewPanel): void {
+async function sendStateToWebview(panel: vscode.WebviewPanel): Promise<void> {
   const character = stateManager.getCharacter();
   const todayStats = stateManager.getTodayStats();
+
+  // Fetch quests, workers, and pending requests if authenticated
+  let quests: any[] = [];
+  let workerSummary = { workerCount: 0, totalGoldPerHour: 0, pendingGold: 0, nextWorkerCost: 100 };
+  let pendingFriendRequests: any[] = [];
+  let pendingPvpChallenges: any[] = [];
+  let pendingBossInvites: any[] = [];
+
+  if (supabaseClient.isAuthenticated()) {
+    try {
+      quests = await questService.refreshDailyQuestsIfNeeded();
+      workerSummary = await workerService.getWorkerSummary();
+
+      // Get pending friend requests (where we are the addressee, not the requester)
+      const friends = await friendsService.getFriends();
+      pendingFriendRequests = friends.filter(f => f.status === 'pending' && !f.isRequester);
+
+      // Get pending PvP challenges
+      pendingPvpChallenges = await pvpBattleService.getPendingChallenges();
+
+      // Get pending boss invites
+      pendingBossInvites = await coopBattleService.getPendingBossInvites();
+    } catch (err) {
+      console.error('Error fetching data:', err);
+    }
+  }
 
   panel.webview.postMessage({
     type: 'stateUpdate',
     character,
-    todayStats
+    todayStats,
+    quests,
+    workerSummary,
+    pendingFriendRequests,
+    pendingPvpChallenges,
+    pendingBossInvites,
+    isAuthenticated: supabaseClient.isAuthenticated()
   });
 }
 
 function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, initialView: string): string {
   const char = stateManager.getCharacter();
   const today = stateManager.getTodayStats();
+
+  // Get sprite URI for the character's class
+  const classFolder = char.class.toLowerCase();
+  const spriteUri = webview.asWebviewUri(
+    vscode.Uri.joinPath(extensionUri, 'media', 'sprites', 'characters', classFolder, 'idle.svg')
+  );
+
+  // Get all class sprite URIs for class change
+  const spriteUris: Record<string, string> = {};
+  ['warrior', 'mage', 'rogue', 'archer'].forEach(cls => {
+    spriteUris[cls] = webview.asWebviewUri(
+      vscode.Uri.joinPath(extensionUri, 'media', 'sprites', 'characters', cls, 'idle.svg')
+    ).toString();
+  });
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -543,15 +840,20 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, in
       margin-bottom: 16px;
     }
     .character-sprite {
-      width: 64px;
-      height: 64px;
+      width: 80px;
+      height: 80px;
       background: var(--vscode-editor-background);
       border: 2px solid var(--vscode-textLink-foreground);
       border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 32px;
+      overflow: hidden;
+    }
+    .character-sprite img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
     .character-info h3 {
       margin: 0;
@@ -602,6 +904,122 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, in
     .stat-value.negative { color: #f14c4c; }
     .stat-value.gold { color: #dcdcaa; }
     .stat-value.xp { color: #c586c0; }
+    .muted { color: var(--vscode-descriptionForeground); font-style: italic; }
+    .quest-item {
+      background: var(--vscode-editor-background);
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .quest-item.completed {
+      border-color: #4ec9b0;
+      background: rgba(78, 201, 176, 0.1);
+    }
+    .quest-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .quest-title {
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .quest-reward {
+      font-size: 12px;
+      color: var(--vscode-descriptionForeground);
+    }
+    .quest-description {
+      font-size: 12px;
+      color: var(--vscode-descriptionForeground);
+      margin-bottom: 8px;
+    }
+    .quest-progress-bar {
+      height: 6px;
+      background: var(--vscode-progressBar-background);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .quest-progress-fill {
+      height: 100%;
+      background: var(--vscode-textLink-foreground);
+      transition: width 0.3s ease;
+    }
+    .quest-progress-fill.complete {
+      background: #4ec9b0;
+    }
+    .quest-progress-text {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground);
+      margin-top: 4px;
+      text-align: right;
+    }
+    .claim-btn {
+      margin-top: 8px;
+      padding: 4px 12px;
+      font-size: 12px;
+      background: #4ec9b0;
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .claim-btn:hover {
+      background: #3db89f;
+    }
+    .request-item {
+      background: var(--vscode-editor-background);
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .request-item.friend { border-left: 3px solid #4ec9b0; }
+    .request-item.pvp { border-left: 3px solid #f14c4c; }
+    .request-item.boss { border-left: 3px solid #dcdcaa; }
+    .request-info {
+      flex: 1;
+    }
+    .request-type {
+      font-size: 11px;
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+    .request-name {
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .request-detail {
+      font-size: 12px;
+      color: var(--vscode-descriptionForeground);
+    }
+    .request-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .request-btn {
+      padding: 6px 12px;
+      font-size: 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .request-btn.accept {
+      background: #4ec9b0;
+      color: #000;
+    }
+    .request-btn.decline {
+      background: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+    }
+    .request-btn:hover {
+      opacity: 0.9;
+    }
     .btn {
       padding: 8px 16px;
       border: none;
@@ -631,7 +1049,7 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, in
 
     <div class="card">
       <div class="character-header">
-        <div class="character-sprite" id="sprite">${getClassEmoji(char.class)}</div>
+        <div class="character-sprite" id="sprite"><img src="${spriteUri}" alt="${char.class}" id="spriteImg"></div>
         <div class="character-info">
           <h3 id="charName">${char.name}</h3>
           <div class="character-class">Level <span id="level">${char.level}</span> <span id="class">${char.class}</span></div>
@@ -652,6 +1070,13 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, in
           <span class="stat-label">Gold</span>
           <span class="stat-value gold" id="gold">${char.gold}</span>
         </div>
+      </div>
+    </div>
+
+    <div id="pendingRequestsSection" style="display: none;">
+      <h2>📬 Pending Requests</h2>
+      <div class="card" id="pendingRequestsCard">
+        <div id="pendingRequestsList"></div>
       </div>
     </div>
 
@@ -681,6 +1106,33 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, in
       </div>
     </div>
 
+    <h2>📜 Daily Quests</h2>
+    <div class="card" id="questsSection">
+      <div id="questsList">
+        <p class="muted">Connect account to see quests</p>
+      </div>
+    </div>
+
+    <h2>⚒️ Workers</h2>
+    <div class="card" id="workersSection">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-label">Workers</span>
+          <span class="stat-value" id="workerCount">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Gold/Hour</span>
+          <span class="stat-value gold" id="goldPerHour">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Pending Gold</span>
+          <span class="stat-value gold" id="pendingGold">0</span>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="collectGold()">💰 Collect Gold</button>
+      <button class="btn btn-secondary" onclick="manageWorkers()">⚒️ Manage Workers</button>
+    </div>
+
     <h2>⚙️ Actions</h2>
     <div class="card">
       <button class="btn btn-primary" onclick="checkCommits()">🔄 Check Commits</button>
@@ -691,25 +1143,160 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, in
 
   <script>
     const vscode = acquireVsCodeApi();
+    const spriteUris = ${JSON.stringify(spriteUris)};
 
     function checkCommits() {
       vscode.postMessage({ type: 'checkCommits' });
     }
 
     function changeName() {
-      const name = prompt('Enter new name:', document.getElementById('charName').textContent);
-      if (name) {
-        vscode.postMessage({ type: 'setName', name });
-      }
+      vscode.postMessage({ type: 'requestNameChange' });
     }
 
     function changeClass() {
-      const classes = ['Warrior', 'Mage', 'Rogue', 'Archer'];
-      const current = document.getElementById('class').textContent;
-      const choice = prompt('Choose class: Warrior, Mage, Rogue, or Archer', current);
-      if (choice && classes.includes(choice)) {
-        vscode.postMessage({ type: 'setClass', class: choice });
+      vscode.postMessage({ type: 'requestClassChange' });
+    }
+
+    function showQuests() {
+      vscode.postMessage({ type: 'showQuests' });
+    }
+
+    function manageWorkers() {
+      vscode.postMessage({ type: 'manageWorkers' });
+    }
+
+    function collectGold() {
+      vscode.postMessage({ type: 'collectGold' });
+    }
+
+    function claimQuest(questId) {
+      vscode.postMessage({ type: 'claimQuest', questId: questId });
+    }
+
+    function renderQuests(quests, isAuthenticated) {
+      const questsList = document.getElementById('questsList');
+      if (!isAuthenticated) {
+        questsList.innerHTML = '<p class="muted">Connect account to see quests</p>';
+        return;
       }
+      if (!quests || quests.length === 0) {
+        questsList.innerHTML = '<p class="muted">No active quests. Check back tomorrow!</p>';
+        return;
+      }
+      let html = '';
+      for (const quest of quests) {
+        const progress = Math.min(100, (quest.requirement_current / quest.requirement_target) * 100);
+        const isComplete = quest.status === 'completed';
+        const isClaimed = quest.status === 'claimed';
+        html += '<div class="quest-item ' + (isComplete ? 'completed' : '') + '">';
+        html += '  <div class="quest-header">';
+        html += '    <span class="quest-title">' + (isComplete ? '✅ ' : '📋 ') + quest.title + '</span>';
+        html += '    <span class="quest-reward">+' + quest.reward_xp + ' XP, +' + quest.reward_gold + ' Gold</span>';
+        html += '  </div>';
+        html += '  <div class="quest-description">' + quest.description + '</div>';
+        html += '  <div class="quest-progress-bar">';
+        html += '    <div class="quest-progress-fill ' + (isComplete ? 'complete' : '') + '" style="width: ' + progress + '%"></div>';
+        html += '  </div>';
+        html += '  <div class="quest-progress-text">' + quest.requirement_current + ' / ' + quest.requirement_target + '</div>';
+        if (isComplete && !isClaimed) {
+          html += '  <button class="claim-btn" onclick="claimQuest(\\'' + quest.id + '\\')">Claim Reward</button>';
+        }
+        html += '</div>';
+      }
+      questsList.innerHTML = html;
+    }
+
+    function renderWorkers(summary, isAuthenticated) {
+      if (!isAuthenticated) return;
+      document.getElementById('workerCount').textContent = summary.workerCount;
+      document.getElementById('goldPerHour').textContent = summary.totalGoldPerHour;
+      document.getElementById('pendingGold').textContent = summary.pendingGold;
+    }
+
+    function acceptFriendRequest(friendId) {
+      vscode.postMessage({ type: 'acceptFriend', friendId: friendId });
+    }
+
+    function declineFriendRequest(friendId) {
+      vscode.postMessage({ type: 'declineFriend', friendId: friendId });
+    }
+
+    function acceptPvpChallenge(battleId) {
+      vscode.postMessage({ type: 'acceptPvp', battleId: battleId });
+    }
+
+    function declinePvpChallenge(battleId) {
+      vscode.postMessage({ type: 'declinePvp', battleId: battleId });
+    }
+
+    function joinBossBattle(lobbyId) {
+      vscode.postMessage({ type: 'joinBoss', lobbyId: lobbyId });
+    }
+
+    function declineBossInvite(lobbyId) {
+      vscode.postMessage({ type: 'declineBoss', lobbyId: lobbyId });
+    }
+
+    function renderPendingRequests(friendRequests, pvpChallenges, bossInvites) {
+      const section = document.getElementById('pendingRequestsSection');
+      const list = document.getElementById('pendingRequestsList');
+
+      const totalPending = (friendRequests?.length || 0) + (pvpChallenges?.length || 0) + (bossInvites?.length || 0);
+
+      if (totalPending === 0) {
+        section.style.display = 'none';
+        return;
+      }
+
+      section.style.display = 'block';
+      let html = '';
+
+      // Friend requests
+      for (const req of (friendRequests || [])) {
+        html += '<div class="request-item friend">';
+        html += '  <div class="request-info">';
+        html += '    <div class="request-type">Friend Request</div>';
+        html += '    <div class="request-name">' + req.displayName + '</div>';
+        html += '    <div class="request-detail">Lv.' + req.level + ' ' + req.characterClass + '</div>';
+        html += '  </div>';
+        html += '  <div class="request-actions">';
+        html += '    <button class="request-btn accept" onclick="acceptFriendRequest(\\'' + req.id + '\\')">Accept</button>';
+        html += '    <button class="request-btn decline" onclick="declineFriendRequest(\\'' + req.id + '\\')">Decline</button>';
+        html += '  </div>';
+        html += '</div>';
+      }
+
+      // PvP challenges
+      for (const challenge of (pvpChallenges || [])) {
+        html += '<div class="request-item pvp">';
+        html += '  <div class="request-info">';
+        html += '    <div class="request-type">PvP Challenge</div>';
+        html += '    <div class="request-name">' + challenge.challengerName + '</div>';
+        html += '    <div class="request-detail">Lv.' + challenge.challengerLevel + ' ' + challenge.challengerClass + '</div>';
+        html += '  </div>';
+        html += '  <div class="request-actions">';
+        html += '    <button class="request-btn accept" onclick="acceptPvpChallenge(\\'' + challenge.id + '\\')">Fight!</button>';
+        html += '    <button class="request-btn decline" onclick="declinePvpChallenge(\\'' + challenge.id + '\\')">Decline</button>';
+        html += '  </div>';
+        html += '</div>';
+      }
+
+      // Boss invites
+      for (const invite of (bossInvites || [])) {
+        html += '<div class="request-item boss">';
+        html += '  <div class="request-info">';
+        html += '    <div class="request-type">Boss Raid Invite</div>';
+        html += '    <div class="request-name">' + invite.challengerName + '</div>';
+        html += '    <div class="request-detail">vs ' + invite.bossName + '</div>';
+        html += '  </div>';
+        html += '  <div class="request-actions">';
+        html += '    <button class="request-btn accept" onclick="joinBossBattle(\\'' + invite.lobbyId + '\\')">Join!</button>';
+        html += '    <button class="request-btn decline" onclick="declineBossInvite(\\'' + invite.lobbyId + '\\')">Decline</button>';
+        html += '  </div>';
+        html += '</div>';
+      }
+
+      list.innerHTML = html;
     }
 
     window.addEventListener('message', event => {
@@ -725,20 +1312,21 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri, in
         document.getElementById('xpNext').textContent = char.xpToNextLevel;
         document.getElementById('xpBar').style.width = (char.xp / char.xpToNextLevel * 100) + '%';
         document.getElementById('gold').textContent = char.gold;
-        document.getElementById('sprite').textContent = getClassEmoji(char.class);
+        document.getElementById('spriteImg').src = spriteUris[char.class.toLowerCase()];
 
         document.getElementById('commits').textContent = today.commits;
         document.getElementById('linesAdded').textContent = '+' + today.linesAdded;
         document.getElementById('linesRemoved').textContent = '-' + today.linesRemoved;
         document.getElementById('filesChanged').textContent = today.filesChanged;
         document.getElementById('xpEarned').textContent = '+' + today.xpEarned;
+
+        // Render quests, workers, and pending requests
+        renderQuests(message.quests, message.isAuthenticated);
+        renderWorkers(message.workerSummary, message.isAuthenticated);
+        renderPendingRequests(message.pendingFriendRequests, message.pendingPvpChallenges, message.pendingBossInvites);
       }
     });
 
-    function getClassEmoji(className) {
-      const emojis = { Warrior: '⚔️', Mage: '🧙', Rogue: '🗡️', Archer: '🏹' };
-      return emojis[className] || '⚔️';
-    }
   </script>
 </body>
 </html>`;
@@ -755,6 +1343,8 @@ function getClassEmoji(className: string): string {
 }
 
 class GitRPGViewProvider implements vscode.WebviewViewProvider {
+  private webviewView?: vscode.WebviewView;
+
   constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly stateManager: LocalStateManager
@@ -765,16 +1355,27 @@ class GitRPGViewProvider implements vscode.WebviewViewProvider {
     context: vscode.WebviewViewResolveContext,
     token: vscode.CancellationToken
   ) {
+    this.webviewView = webviewView;
+
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this.extensionUri]
+      localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'media')]
     };
 
     webviewView.webview.html = this.getSidebarContent(webviewView.webview);
 
     // Update sidebar when state changes
     this.stateManager.onStateChange(() => {
-      webviewView.webview.html = this.getSidebarContent(webviewView.webview);
+      if (this.webviewView) {
+        this.webviewView.webview.html = this.getSidebarContent(this.webviewView.webview);
+      }
+    });
+
+    // Handle messages from sidebar
+    webviewView.webview.onDidReceiveMessage(message => {
+      if (message.type === 'command') {
+        vscode.commands.executeCommand(message.command);
+      }
     });
   }
 
@@ -783,11 +1384,18 @@ class GitRPGViewProvider implements vscode.WebviewViewProvider {
     const today = this.stateManager.getTodayStats();
     const xpPercent = Math.round((char.xp / char.xpToNextLevel) * 100);
 
+    // Get sprite URI for the character's class
+    const classFolder = char.class.toLowerCase();
+    const spriteUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this.extensionUri, 'media', 'sprites', 'characters', classFolder, 'idle.svg')
+    );
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'unsafe-inline'; img-src ${webview.cspSource} data:;">
   <style>
     body {
       font-family: var(--vscode-font-family);
@@ -799,8 +1407,8 @@ class GitRPGViewProvider implements vscode.WebviewViewProvider {
     .stat-label { font-size: 11px; opacity: 0.7; }
     .stat-value { font-size: 16px; font-weight: bold; }
     .character-preview {
-      width: 64px;
-      height: 64px;
+      width: 80px;
+      height: 80px;
       margin: 10px auto;
       background: var(--vscode-editor-background);
       border: 2px solid var(--vscode-textLink-foreground);
@@ -808,7 +1416,12 @@ class GitRPGViewProvider implements vscode.WebviewViewProvider {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
+      overflow: hidden;
+    }
+    .character-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
     .char-name {
       text-align: center;
@@ -857,7 +1470,7 @@ class GitRPGViewProvider implements vscode.WebviewViewProvider {
   </style>
 </head>
 <body>
-  <div class="character-preview">${getClassEmoji(char.class)}</div>
+  <div class="character-preview"><img src="${spriteUri}" alt="${char.class}"></div>
   <div class="char-name">${char.name}</div>
   <div class="char-class">Level ${char.level} ${char.class}</div>
 

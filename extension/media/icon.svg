@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="swordGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc"/>
+      <stop offset="100%" style="stop-color:#cbd5e1"/>
+    </linearGradient>
+    <linearGradient id="handleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#854d0e"/>
+      <stop offset="100%" style="stop-color:#713f12"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="#1e1b4b"/>
+  <circle cx="64" cy="64" r="56" fill="#312e81"/>
+
+  <!-- Shield -->
+  <path d="M64 20 L98 35 L98 70 Q98 95 64 110 Q30 95 30 70 L30 35 Z"
+        fill="url(#shieldGrad)" stroke="#818cf8" stroke-width="2"/>
+
+  <!-- Shield inner design - git branch pattern -->
+  <circle cx="64" cy="50" r="6" fill="#c7d2fe"/>
+  <line x1="64" y1="56" x2="64" y2="85" stroke="#c7d2fe" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="64" cy="85" r="5" fill="#c7d2fe"/>
+  <line x1="64" y1="56" x2="50" y2="68" stroke="#c7d2fe" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="50" cy="68" r="4" fill="#a5b4fc"/>
+  <line x1="64" y1="65" x2="78" y2="75" stroke="#c7d2fe" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="78" cy="75" r="4" fill="#a5b4fc"/>
+
+  <!-- Sword behind shield -->
+  <g transform="rotate(-30, 64, 64)">
+    <!-- Blade -->
+    <path d="M64 5 L70 15 L68 55 L64 60 L60 55 L58 15 Z" fill="url(#swordGrad)" stroke="#94a3b8" stroke-width="1"/>
+    <!-- Guard -->
+    <rect x="52" y="58" width="24" height="6" rx="2" fill="#eab308" stroke="#ca8a04" stroke-width="1"/>
+    <!-- Handle -->
+    <rect x="60" y="64" width="8" height="18" rx="1" fill="url(#handleGrad)"/>
+    <!-- Pommel -->
+    <circle cx="64" cy="85" r="5" fill="#eab308" stroke="#ca8a04" stroke-width="1"/>
+  </g>
+
+  <!-- XP sparkles -->
+  <g fill="#fbbf24">
+    <polygon points="20,25 22,30 27,30 23,33 25,38 20,35 15,38 17,33 13,30 18,30" transform="scale(0.6) translate(15, 10)"/>
+    <polygon points="20,25 22,30 27,30 23,33 25,38 20,35 15,38 17,33 13,30 18,30" transform="scale(0.5) translate(180, 20)"/>
+    <polygon points="20,25 22,30 27,30 23,33 25,38 20,35 15,38 17,33 13,30 18,30" transform="scale(0.4) translate(50, 220)"/>
+  </g>
+</svg>

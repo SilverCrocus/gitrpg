@@ -2,7 +2,8 @@
   "name": "gitrpg",
   "displayName": "GitRPG",
   "description": "Turn your coding into an RPG - earn XP, level up characters, battle friends!",
-  "version": "0.0.1",
+  "icon": "media/icon.png",
+  "version": "0.0.6",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -74,6 +75,18 @@
       {
         "command": "gitrpg.viewDailyBoss",
         "title": "GitRPG: View Today's Boss"
+      },
+      {
+        "command": "gitrpg.showQuests",
+        "title": "GitRPG: Show Daily Quests"
+      },
+      {
+        "command": "gitrpg.showWorkers",
+        "title": "GitRPG: Manage Workers"
+      },
+      {
+        "command": "gitrpg.collectGold",
+        "title": "GitRPG: Collect Worker Gold"
       }
     ],
     "viewsContainers": {
@@ -96,7 +109,7 @@
     }
   },
   "extensionDependencies": [],
-  "publisher": "gitrpg",
+  "publisher": "HivinDiyagama",
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
