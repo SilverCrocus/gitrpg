@@ -1,1 +1,359 @@
-// Dashboard webview panel management
+import * as vscode from 'vscode';
+import { buildWebviewHtml } from '../webviewUtils';
+import { LocalStateManager } from '../../services/localStateManager';
+import { SupabaseClientService } from '../../services/supabaseClient';
+import { QuestService } from '../../services/questService';
+import { WorkerService } from '../../services/workerService';
+import { FriendsService } from '../../services/friendsService';
+import { PvpBattleService } from '../../services/pvpBattleService';
+import { CoopBattleService } from '../../services/coopBattleService';
+import { GitTrackingService } from '../../services/gitTrackingService';
+
+/**
+ * Services required by the DashboardPanel
+ */
+export interface DashboardServices {
+  stateManager: LocalStateManager;
+  supabaseClient: SupabaseClientService;
+  questService: QuestService;
+  workerService: WorkerService;
+  friendsService: FriendsService;
+  pvpBattleService: PvpBattleService;
+  coopBattleService: CoopBattleService;
+  gitTracker: GitTrackingService;
+}
+
+/**
+ * DashboardPanel manages the main GitRPG dashboard webview
+ */
+export class DashboardPanel {
+  public static currentPanel: DashboardPanel | undefined;
+
+  private readonly panel: vscode.WebviewPanel;
+  private readonly extensionUri: vscode.Uri;
+  private readonly services: DashboardServices;
+  private disposables: vscode.Disposable[] = [];
+
+  /**
+   * Creates or shows the dashboard panel
+   */
+  public static createOrShow(
+    context: vscode.ExtensionContext,
+    services: DashboardServices,
+    initialView: string = 'dashboard'
+  ): DashboardPanel {
+    const column = vscode.window.activeTextEditor
+      ? vscode.window.activeTextEditor.viewColumn
+      : vscode.ViewColumn.One;
+
+    // If panel already exists, reveal it
+    if (DashboardPanel.currentPanel) {
+      DashboardPanel.currentPanel.panel.reveal(column);
+      DashboardPanel.currentPanel.panel.webview.postMessage({ type: 'navigate', view: initialView });
+      DashboardPanel.currentPanel.sendStateToWebview();
+      return DashboardPanel.currentPanel;
+    }
+
+    // Create a new panel
+    const panel = vscode.window.createWebviewPanel(
+      'gitrpg',
+      'GitRPG',
+      column || vscode.ViewColumn.One,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')]
+      }
+    );
+
+    DashboardPanel.currentPanel = new DashboardPanel(panel, context.extensionUri, services, context);
+    return DashboardPanel.currentPanel;
+  }
+
+  /**
+   * Private constructor - use createOrShow instead
+   */
+  private constructor(
+    panel: vscode.WebviewPanel,
+    extensionUri: vscode.Uri,
+    services: DashboardServices,
+    context: vscode.ExtensionContext
+  ) {
+    this.panel = panel;
+    this.extensionUri = extensionUri;
+    this.services = services;
+
+    // Set the webview's initial HTML content
+    this.panel.webview.html = this.getHtml();
+
+    // Send initial state
+    this.sendStateToWebview();
+
+    // Handle panel disposal
+    this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
+
+    // Update webview when state changes
+    // Note: onStateChange doesn't return a disposable, so we just register the callback
+    services.stateManager.onStateChange(() => {
+      this.sendStateToWebview();
+    });
+
+    // Handle messages from webview
+    this.panel.webview.onDidReceiveMessage(
+      message => this.handleMessage(message, context),
+      null,
+      this.disposables
+    );
+  }
+
+  /**
+   * Send current state to the webview
+   */
+  public async sendStateToWebview(): Promise<void> {
+    const { stateManager, supabaseClient, questService, workerService, friendsService, pvpBattleService, coopBattleService } = this.services;
+
+    const character = stateManager.getCharacter();
+    const todayStats = stateManager.getTodayStats();
+
+    // Fetch quests, workers, and pending requests if authenticated
+    let quests: any[] = [];
+    let workerSummary = { workerCount: 0, totalGoldPerHour: 0, pendingGold: 0, nextWorkerCost: 100 };
+    let pendingFriendRequests: any[] = [];
+    let pendingPvpChallenges: any[] = [];
+    let pendingBossInvites: any[] = [];
+
+    if (supabaseClient.isAuthenticated()) {
+      try {
+        quests = await questService.refreshDailyQuestsIfNeeded();
+        workerSummary = await workerService.getWorkerSummary();
+
+        // Get pending friend requests (where we are the addressee, not the requester)
+        const friends = await friendsService.getFriends();
+        pendingFriendRequests = friends.filter(f => f.status === 'pending' && !f.isRequester);
+
+        // Get pending PvP challenges
+        pendingPvpChallenges = await pvpBattleService.getPendingChallenges();
+
+        // Get pending boss invites
+        pendingBossInvites = await coopBattleService.getPendingBossInvites();
+      } catch (err) {
+        console.error('Error fetching data:', err);
+      }
+    }
+
+    this.panel.webview.postMessage({
+      type: 'stateUpdate',
+      character,
+      todayStats,
+      quests,
+      workerSummary,
+      pendingFriendRequests,
+      pendingPvpChallenges,
+      pendingBossInvites,
+      isAuthenticated: supabaseClient.isAuthenticated()
+    });
+  }
+
+  /**
+   * Update state with specific data (for incremental updates)
+   */
+  public updateState(data: Record<string, unknown>): void {
+    this.panel.webview.postMessage({ type: 'stateUpdate', ...data });
+  }
+
+  /**
+   * Get the HTML content for the webview
+   */
+  private getHtml(): string {
+    return buildWebviewHtml({
+      webview: this.panel.webview,
+      extensionUri: this.extensionUri,
+      templatePath: 'dashboard/template.html',
+      stylesPath: 'dashboard/styles.css',
+      scriptPath: 'dashboard/script.js',
+      data: this.getInitialData(),
+      title: 'GitRPG'
+    });
+  }
+
+  /**
+   * Get initial data to inject into the webview
+   */
+  private getInitialData(): Record<string, unknown> {
+    const { stateManager } = this.services;
+    const char = stateManager.getCharacter();
+    const today = stateManager.getTodayStats();
+
+    // Get all class sprite URIs for class change
+    const spriteUris: Record<string, string> = {};
+    ['warrior', 'mage', 'rogue', 'archer'].forEach(cls => {
+      spriteUris[cls] = this.panel.webview.asWebviewUri(
+        vscode.Uri.joinPath(this.extensionUri, 'media', 'sprites', 'characters', cls, 'idle.svg')
+      ).toString();
+    });
+
+    return {
+      character: char,
+      todayStats: today,
+      spriteUris
+    };
+  }
+
+  /**
+   * Handle messages from the webview
+   */
+  private async handleMessage(message: any, context: vscode.ExtensionContext): Promise<void> {
+    const { stateManager, gitTracker, supabaseClient, questService, friendsService, pvpBattleService, coopBattleService } = this.services;
+
+    switch (message.type) {
+      case 'alert':
+        vscode.window.showInformationMessage(message.text);
+        break;
+
+      case 'error':
+        vscode.window.showErrorMessage(message.text);
+        break;
+
+      case 'checkCommits':
+        await gitTracker.forceCheck();
+        vscode.window.showInformationMessage('Commits checked!');
+        break;
+
+      case 'requestNameChange': {
+        const name = await vscode.window.showInputBox({
+          prompt: 'Enter your character name',
+          value: stateManager.getCharacter().name
+        });
+        if (name) {
+          await stateManager.setCharacterName(name);
+          vscode.window.showInformationMessage(`Character renamed to ${name}!`);
+        }
+        break;
+      }
+
+      case 'requestClassChange': {
+        const classes = ['Warrior', 'Mage', 'Rogue', 'Archer'];
+        const selected = await vscode.window.showQuickPick(classes, {
+          placeHolder: 'Choose your class'
+        });
+        if (selected) {
+          await stateManager.setCharacterClass(selected as any);
+          vscode.window.showInformationMessage(`Class changed to ${selected}!`);
+        }
+        break;
+      }
+
+      case 'setName':
+        await stateManager.setCharacterName(message.name);
+        break;
+
+      case 'setClass':
+        await stateManager.setCharacterClass(message.class);
+        break;
+
+      case 'showQuests':
+        vscode.commands.executeCommand('gitrpg.showQuests');
+        break;
+
+      case 'manageWorkers':
+        vscode.commands.executeCommand('gitrpg.showWorkers');
+        break;
+
+      case 'collectGold':
+        vscode.commands.executeCommand('gitrpg.collectGold');
+        break;
+
+      case 'claimQuest': {
+        const rewards = await questService.claimQuestReward(message.questId);
+        if (rewards) {
+          vscode.window.showInformationMessage(`Claimed ${rewards.xp} XP and ${rewards.gold} Gold!`);
+          await this.sendStateToWebview();
+        }
+        break;
+      }
+
+      case 'acceptFriend': {
+        const accepted = await friendsService.acceptFriendRequest(message.friendId);
+        if (accepted) {
+          vscode.window.showInformationMessage('Friend request accepted!');
+          await this.sendStateToWebview();
+        }
+        break;
+      }
+
+      case 'declineFriend': {
+        await friendsService.declineFriendRequest(message.friendId);
+        vscode.window.showInformationMessage('Friend request declined.');
+        await this.sendStateToWebview();
+        break;
+      }
+
+      case 'acceptPvp': {
+        const result = await pvpBattleService.acceptChallenge(message.battleId);
+        if (result) {
+          const resultText = result.winner.name === stateManager.getCharacter().name ? 'You won!' : 'You lost!';
+          vscode.window.showInformationMessage(`Battle complete! ${resultText} Winner: ${result.winner.name}`);
+          await this.sendStateToWebview();
+        }
+        break;
+      }
+
+      case 'declinePvp': {
+        await pvpBattleService.declineChallenge(message.battleId);
+        vscode.window.showInformationMessage('PvP challenge declined.');
+        await this.sendStateToWebview();
+        break;
+      }
+
+      case 'joinBoss': {
+        vscode.window.showInformationMessage('Joining boss battle...');
+        const battleResult = await coopBattleService.runFullBossBattle(message.lobbyId);
+        if (battleResult.success) {
+          const outcome = battleResult.won ? 'Victory!' : 'Defeat!';
+          const rewardText = battleResult.rewards
+            ? ` Rewards: ${battleResult.rewards.xp} XP, ${battleResult.rewards.gold} Gold`
+            : '';
+          vscode.window.showInformationMessage(`Boss Battle ${outcome}${rewardText}`);
+          // Show battle summary
+          if (battleResult.battleLog && battleResult.battleLog.length > 0) {
+            const totalTurns = Math.max(...battleResult.battleLog.map(e => e.turn));
+            vscode.window.showInformationMessage(`Battle lasted ${totalTurns} turns!`);
+          }
+        } else {
+          vscode.window.showErrorMessage(battleResult.error || 'Failed to run boss battle');
+        }
+        await this.sendStateToWebview();
+        break;
+      }
+
+      case 'declineBoss': {
+        // Mark the lobby as abandoned
+        const client = supabaseClient.getClient();
+        await client
+          .from('boss_battles')
+          .update({ status: 'abandoned' })
+          .eq('id', message.lobbyId);
+        vscode.window.showInformationMessage('Boss raid declined.');
+        await this.sendStateToWebview();
+        break;
+      }
+    }
+  }
+
+  /**
+   * Dispose of the panel and clean up resources
+   */
+  public dispose(): void {
+    DashboardPanel.currentPanel = undefined;
+
+    // Clean up resources
+    this.panel.dispose();
+
+    while (this.disposables.length) {
+      const disposable = this.disposables.pop();
+      if (disposable) {
+        disposable.dispose();
+      }
+    }
+  }
+}

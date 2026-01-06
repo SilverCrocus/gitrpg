@@ -1,0 +1,324 @@
+/* Dashboard Webview Styles */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--vscode-font-family);
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-editor-background);
+  padding: 20px;
+  margin: 0;
+}
+
+h1 {
+  color: var(--vscode-textLink-foreground);
+  margin-bottom: 5px;
+}
+
+h2 {
+  color: var(--vscode-textLink-activeForeground);
+  font-size: 16px;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  padding-bottom: 5px;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.subtitle {
+  color: var(--vscode-descriptionForeground);
+  margin-bottom: 20px;
+}
+
+/* Card Component */
+.card {
+  background: var(--vscode-editor-inactiveSelectionBackground);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+/* Character Header */
+.character-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.character-sprite {
+  width: 80px;
+  height: 80px;
+  background: var(--vscode-editor-background);
+  border: 2px solid var(--vscode-textLink-foreground);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.character-sprite img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.character-info h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.character-class {
+  color: var(--vscode-descriptionForeground);
+  font-size: 14px;
+}
+
+/* XP Bar */
+.xp-bar-container {
+  margin-top: 8px;
+}
+
+.xp-bar {
+  height: 8px;
+  background: var(--vscode-progressBar-background);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.xp-bar-fill {
+  height: 100%;
+  background: var(--vscode-textLink-foreground);
+  transition: width 0.3s ease;
+}
+
+.xp-text {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+  margin-top: 4px;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  background: var(--vscode-editor-background);
+  border-radius: 4px;
+}
+
+.stat-label {
+  color: var(--vscode-descriptionForeground);
+}
+
+.stat-value {
+  font-weight: bold;
+}
+
+.stat-value.positive {
+  color: #4ec9b0;
+}
+
+.stat-value.negative {
+  color: #f14c4c;
+}
+
+.stat-value.gold {
+  color: #dcdcaa;
+}
+
+.stat-value.xp {
+  color: #c586c0;
+}
+
+/* Muted Text */
+.muted {
+  color: var(--vscode-descriptionForeground);
+  font-style: italic;
+}
+
+/* Quest Items */
+.quest-item {
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.quest-item.completed {
+  border-color: #4ec9b0;
+  background: rgba(78, 201, 176, 0.1);
+}
+
+.quest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.quest-title {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.quest-reward {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.quest-description {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+  margin-bottom: 8px;
+}
+
+.quest-progress-bar {
+  height: 6px;
+  background: var(--vscode-progressBar-background);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.quest-progress-fill {
+  height: 100%;
+  background: var(--vscode-textLink-foreground);
+  transition: width 0.3s ease;
+}
+
+.quest-progress-fill.complete {
+  background: #4ec9b0;
+}
+
+.quest-progress-text {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  margin-top: 4px;
+  text-align: right;
+}
+
+.claim-btn {
+  margin-top: 8px;
+  padding: 4px 12px;
+  font-size: 12px;
+  background: #4ec9b0;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.claim-btn:hover {
+  background: #3db89f;
+}
+
+/* Request Items (Friend Requests, PvP Challenges, Boss Invites) */
+.request-item {
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.request-item.friend {
+  border-left: 3px solid #4ec9b0;
+}
+
+.request-item.pvp {
+  border-left: 3px solid #f14c4c;
+}
+
+.request-item.boss {
+  border-left: 3px solid #dcdcaa;
+}
+
+.request-info {
+  flex: 1;
+}
+
+.request-type {
+  font-size: 11px;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+
+.request-name {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.request-detail {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.request-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.request-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.request-btn.accept {
+  background: #4ec9b0;
+  color: #000;
+}
+
+.request-btn.decline {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+.request-btn:hover {
+  opacity: 0.9;
+}
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 8px;
+  margin-top: 8px;
+}
+
+.btn-primary {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+.btn-primary:hover {
+  background: var(--vscode-button-hoverBackground);
+}
+
+.btn-secondary {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}

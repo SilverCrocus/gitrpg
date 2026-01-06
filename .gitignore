@@ -48,6 +48,7 @@ next-env.d.ts
 !*.config.js
 !eslint.config.js
 !vitest.config.ts
+!extension/src/webview/**/*.js
 
 # IDE
 .idea/

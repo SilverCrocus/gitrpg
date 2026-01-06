@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {{CSP}}
+  <title>{{TITLE}}</title>
+  {{STYLES}}
+  {{DATA}}
+</head>
+<body>
+  <div class="container">
+    <h1>GitRPG</h1>
+    <p class="subtitle">Turn your commits into XP!</p>
+
+    <div class="card">
+      <div class="character-header">
+        <div class="character-sprite" id="sprite"><img src="" alt="" id="spriteImg"></div>
+        <div class="character-info">
+          <h3 id="charName"></h3>
+          <div class="character-class">Level <span id="level"></span> <span id="class"></span></div>
+        </div>
+      </div>
+      <div class="xp-bar-container">
+        <div class="xp-bar">
+          <div class="xp-bar-fill" id="xpBar" style="width: 0%"></div>
+        </div>
+        <div class="xp-text"><span id="xp">0</span> / <span id="xpNext">100</span> XP</div>
+      </div>
+    </div>
+
+    <h2>Resources</h2>
+    <div class="card">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-label">Gold</span>
+          <span class="stat-value gold" id="gold">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="pendingRequestsSection" style="display: none;">
+      <h2>Pending Requests</h2>
+      <div class="card" id="pendingRequestsCard">
+        <div id="pendingRequestsList"></div>
+      </div>
+    </div>
+
+    <h2>Today's Activity</h2>
+    <div class="card">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-label">Commits</span>
+          <span class="stat-value" id="commits">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Lines Added</span>
+          <span class="stat-value positive" id="linesAdded">+0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Lines Removed</span>
+          <span class="stat-value negative" id="linesRemoved">-0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Files Changed</span>
+          <span class="stat-value" id="filesChanged">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">XP Earned</span>
+          <span class="stat-value xp" id="xpEarned">+0</span>
+        </div>
+      </div>
+    </div>
+
+    <h2>Daily Quests</h2>
+    <div class="card" id="questsSection">
+      <div id="questsList">
+        <p class="muted">Connect account to see quests</p>
+      </div>
+    </div>
+
+    <h2>Workers</h2>
+    <div class="card" id="workersSection">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-label">Workers</span>
+          <span class="stat-value" id="workerCount">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Gold/Hour</span>
+          <span class="stat-value gold" id="goldPerHour">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Pending Gold</span>
+          <span class="stat-value gold" id="pendingGold">0</span>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="collectGold()">Collect Gold</button>
+      <button class="btn btn-secondary" onclick="manageWorkers()">Manage Workers</button>
+    </div>
+
+    <h2>Actions</h2>
+    <div class="card">
+      <button class="btn btn-primary" onclick="checkCommits()">Check Commits</button>
+      <button class="btn btn-secondary" onclick="changeName()">Change Name</button>
+      <button class="btn btn-secondary" onclick="changeClass()">Change Class</button>
+    </div>
+  </div>
+
+  {{SCRIPT}}
+</body>
+</html>
