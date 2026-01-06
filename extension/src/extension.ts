@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { registerBattleCommand } from './commands/battleCommand';
+import { registerAllCommands, AllServices } from './commands';
 import { LocalStateManager } from './services/localStateManager';
 import type { Character, TodayStats } from './types';
 import { GitTrackingService } from './services/gitTrackingService';
@@ -8,7 +8,7 @@ import { ProfileSyncService } from './services/profileSyncService';
 import { FriendsService } from './services/friendsService';
 import { PvpBattleService } from './services/pvpBattleService';
 import { CoopBattleService } from './services/coopBattleService';
-import { BOSS_DEFINITIONS, getBossEmoji } from './services/bossService';
+import { getBossEmoji } from './services/bossService';
 import { QuestService } from './services/questService';
 import { WorkerService } from './services/workerService';
 import { registerAuthHandler } from './authHandler';
@@ -126,7 +126,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   });
 
-  // Register commands
+  // Register commands that need mainPanel (remain inline)
   const showDashboardCmd = vscode.commands.registerCommand('gitrpg.showDashboard', () => {
     showMainPanel(context, 'dashboard');
   });
@@ -139,400 +139,27 @@ export async function activate(context: vscode.ExtensionContext) {
     showMainPanel(context, 'battle');
   });
 
-  // Register battle command
-  const showBattleCmd = registerBattleCommand(context);
+  // Create AllServices object for command registration
+  const allServices: AllServices = {
+    stateManager,
+    gitTracker,
+    supabaseClient,
+    profileSync,
+    friendsService,
+    pvpBattleService,
+    coopBattleService,
+    questService,
+    workerService,
+  };
 
-  // New commands for git tracking
-  const checkCommitsCmd = vscode.commands.registerCommand('gitrpg.checkCommits', async () => {
-    vscode.window.showInformationMessage('Checking for new commits...');
-    await gitTracker.forceCheck();
-  });
-
-  const showLogCmd = vscode.commands.registerCommand('gitrpg.showLog', () => {
-    gitTracker.showLog();
-  });
-
-  const setNameCmd = vscode.commands.registerCommand('gitrpg.setName', async () => {
-    const name = await vscode.window.showInputBox({
-      prompt: 'Enter your character name',
-      value: stateManager.getCharacter().name
-    });
-    if (name) {
-      await stateManager.setCharacterName(name);
-      vscode.window.showInformationMessage(`Character renamed to ${name}!`);
-    }
-  });
-
-  const setClassCmd = vscode.commands.registerCommand('gitrpg.setClass', async () => {
-    const classes = ['Warrior', 'Mage', 'Rogue', 'Archer'];
-    const selected = await vscode.window.showQuickPick(classes, {
-      placeHolder: 'Choose your class'
-    });
-    if (selected) {
-      await stateManager.setCharacterClass(selected as any);
-      vscode.window.showInformationMessage(`Class changed to ${selected}!`);
-    }
-  });
-
-  const resetCmd = vscode.commands.registerCommand('gitrpg.reset', async () => {
-    const confirm = await vscode.window.showWarningMessage(
-      'Are you sure you want to reset all progress?',
-      { modal: true },
-      'Yes, Reset'
-    );
-    if (confirm === 'Yes, Reset') {
-      await stateManager.resetState();
-      vscode.window.showInformationMessage('Progress reset!');
-    }
-  });
-
-  const showStatsCmd = vscode.commands.registerCommand('gitrpg.showStats', () => {
-    const char = stateManager.getCharacter();
-    const today = stateManager.getTodayStats();
-
-    vscode.window.showInformationMessage(
-      `${char.name} - Level ${char.level} ${char.class}\n` +
-      `XP: ${char.xp}/${char.xpToNextLevel} | Gold: ${char.gold}\n` +
-      `Today: ${today.commits} commits, +${today.xpEarned} XP`
-    );
-  });
-
-  // Social commands
-  const connectAccountCmd = vscode.commands.registerCommand('gitrpg.connectAccount', async () => {
-    if (supabaseClient.isAuthenticated()) {
-      const profile = await profileSync.getMyProfile();
-      vscode.window.showInformationMessage(
-        `Already connected! Friend code: ${profile?.friend_code || 'Unknown'}`,
-        'Copy Code'
-      ).then(async (action) => {
-        if (action === 'Copy Code' && profile?.friend_code) {
-          await vscode.env.clipboard.writeText(profile.friend_code);
-          vscode.window.showInformationMessage('Friend code copied!');
-        }
-      });
-      return;
-    }
-
-    const authResult = await supabaseClient.signInWithGitHub();
-    if (authResult?.url) {
-      vscode.env.openExternal(vscode.Uri.parse(authResult.url));
-      vscode.window.showInformationMessage('Opening GitHub login in browser...');
-    } else {
-      vscode.window.showErrorMessage('Failed to start authentication. Please try again.');
-    }
-  });
-
-  const showFriendsCmd = vscode.commands.registerCommand('gitrpg.showFriends', async () => {
-    if (!supabaseClient.isAuthenticated()) {
-      vscode.window.showWarningMessage('Connect your account first!', 'Connect').then((action) => {
-        if (action === 'Connect') {
-          vscode.commands.executeCommand('gitrpg.connectAccount');
-        }
-      });
-      return;
-    }
-
-    const friends = await friendsService.getFriends();
-    const accepted = friends.filter(f => f.status === 'accepted');
-    const pending = friends.filter(f => f.status === 'pending' && !f.isRequester);
-
-    if (friends.length === 0) {
-      vscode.window.showInformationMessage('No friends yet! Add friends with their friend code.');
-      return;
-    }
-
-    const items = [
-      ...accepted.map(f => ({
-        label: `$(person) ${f.displayName}`,
-        description: `Lv.${f.level} ${f.characterClass}`,
-        detail: f.friendCode,
-        friend: f,
-      })),
-      ...pending.map(f => ({
-        label: `$(mail) ${f.displayName} (pending)`,
-        description: `Lv.${f.level} ${f.characterClass}`,
-        detail: 'Click to accept/decline',
-        friend: f,
-      })),
-    ];
-
-    const selected = await vscode.window.showQuickPick(items, {
-      placeHolder: 'Your friends'
-    });
-
-    if (selected) {
-      if (selected.friend.status === 'pending') {
-        const action = await vscode.window.showQuickPick(['Accept', 'Decline'], {
-          placeHolder: `Friend request from ${selected.friend.displayName}`
-        });
-        if (action === 'Accept') {
-          await friendsService.acceptFriendRequest(selected.friend.id);
-          vscode.window.showInformationMessage(`You are now friends with ${selected.friend.displayName}!`);
-        } else if (action === 'Decline') {
-          await friendsService.declineFriendRequest(selected.friend.id);
-        }
-      } else {
-        const action = await vscode.window.showQuickPick(['Challenge to Battle', 'Remove Friend'], {
-          placeHolder: selected.friend.displayName
-        });
-        if (action === 'Challenge to Battle') {
-          const result = await pvpBattleService.challengeFriend(selected.friend.id);
-          if (result.success) {
-            vscode.window.showInformationMessage(`Challenge sent to ${selected.friend.displayName}!`);
-          } else {
-            vscode.window.showErrorMessage(result.error || 'Failed to send challenge');
-          }
-        } else if (action === 'Remove Friend') {
-          await friendsService.removeFriend(selected.friend.id);
-          vscode.window.showInformationMessage(`Removed ${selected.friend.displayName} from friends`);
-        }
-      }
-    }
-  });
-
-  const addFriendCmd = vscode.commands.registerCommand('gitrpg.addFriend', async () => {
-    if (!supabaseClient.isAuthenticated()) {
-      vscode.window.showWarningMessage('Connect your account first!');
-      return;
-    }
-
-    const friendCode = await vscode.window.showInputBox({
-      prompt: 'Enter friend code',
-      placeHolder: 'GRPG-XXXX-XXXX'
-    });
-
-    if (friendCode) {
-      const result = await friendsService.sendFriendRequest(friendCode);
-      if (result.success) {
-        vscode.window.showInformationMessage('Friend request sent!');
-      } else {
-        vscode.window.showErrorMessage(result.error || 'Failed to send request');
-      }
-    }
-  });
-
-  const showFriendCodeCmd = vscode.commands.registerCommand('gitrpg.showFriendCode', async () => {
-    if (!supabaseClient.isAuthenticated()) {
-      vscode.window.showWarningMessage('Connect your account first!');
-      return;
-    }
-
-    const code = await profileSync.getMyFriendCode();
-    if (code) {
-      const action = await vscode.window.showInformationMessage(
-        `Your friend code: ${code}`,
-        'Copy to Clipboard'
-      );
-      if (action === 'Copy to Clipboard') {
-        await vscode.env.clipboard.writeText(code);
-        vscode.window.showInformationMessage('Friend code copied!');
-      }
-    }
-  });
-
-  const viewDailyBossCmd = vscode.commands.registerCommand('gitrpg.viewDailyBoss', async () => {
-    if (!supabaseClient.isAuthenticated()) {
-      vscode.window.showWarningMessage('Connect your account first!');
-      return;
-    }
-
-    const bossType = await coopBattleService.getDailyBoss();
-    const boss = BOSS_DEFINITIONS[bossType];
-    const canFight = await coopBattleService.canFightBoss();
-
-    vscode.window.showInformationMessage(
-      `${getBossEmoji(bossType)} Today's Boss: ${boss.name}\n` +
-      `HP: ${boss.baseHp} | ATK: ${boss.baseAttack} | DEF: ${boss.baseDefense}\n` +
-      `${canFight ? 'You can fight!' : 'Already defeated today'}`,
-      canFight ? 'Challenge with Friend' : 'OK'
-    ).then(action => {
-      if (action === 'Challenge with Friend') {
-        vscode.commands.executeCommand('gitrpg.challengeBoss');
-      }
-    });
-  });
-
-  const challengeBossCmd = vscode.commands.registerCommand('gitrpg.challengeBoss', async () => {
-    if (!supabaseClient.isAuthenticated()) {
-      vscode.window.showWarningMessage('Connect your account first!');
-      return;
-    }
-
-    const canFight = await coopBattleService.canFightBoss();
-    if (!canFight) {
-      vscode.window.showWarningMessage('You already defeated today\'s boss!');
-      return;
-    }
-
-    const friends = await friendsService.getFriends();
-    const acceptedFriends = friends.filter(f => f.status === 'accepted');
-
-    if (acceptedFriends.length === 0) {
-      vscode.window.showWarningMessage('Add some friends first to challenge the boss together!');
-      return;
-    }
-
-    const items = acceptedFriends.map(f => ({
-      label: `$(person) ${f.displayName}`,
-      description: `Lv.${f.level} ${f.characterClass}`,
-      friend: f
-    }));
-
-    const selected = await vscode.window.showQuickPick(items, {
-      placeHolder: 'Select a friend to challenge the boss with'
-    });
-
-    if (selected) {
-      const result = await coopBattleService.createBossLobby(selected.friend.id);
-      if (result.success) {
-        vscode.window.showInformationMessage(
-          `Boss challenge sent to ${selected.friend.displayName}! Waiting for them to join...`
-        );
-        // TODO: Open boss battle webview
-      } else {
-        vscode.window.showErrorMessage(result.error || 'Failed to create boss lobby');
-      }
-    }
-  });
-
-  // Quest commands
-  const showQuestsCmd = vscode.commands.registerCommand('gitrpg.showQuests', async () => {
-    if (!supabaseClient.isAuthenticated()) {
-      vscode.window.showWarningMessage('Connect your account first to see quests!', 'Connect').then((action) => {
-        if (action === 'Connect') {
-          vscode.commands.executeCommand('gitrpg.connectAccount');
-        }
-      });
-      return;
-    }
-
-    // Refresh daily quests if needed
-    const quests = await questService.refreshDailyQuestsIfNeeded();
-
-    if (quests.length === 0) {
-      vscode.window.showInformationMessage('No active quests. Check back tomorrow for new daily quests!');
-      return;
-    }
-
-    const items = quests.map(q => ({
-      label: `${q.status === 'completed' ? '✅' : '📋'} ${q.title}`,
-      description: `${q.requirement_current}/${q.requirement_target} - ${q.reward_xp} XP, ${q.reward_gold} Gold`,
-      detail: q.description,
-      quest: q
-    }));
-
-    const selected = await vscode.window.showQuickPick(items, {
-      placeHolder: 'Your Daily Quests'
-    });
-
-    if (selected && selected.quest.status === 'completed') {
-      const claim = await vscode.window.showQuickPick(['Claim Reward', 'Cancel'], {
-        placeHolder: `Claim ${selected.quest.reward_xp} XP and ${selected.quest.reward_gold} Gold?`
-      });
-
-      if (claim === 'Claim Reward') {
-        const rewards = await questService.claimQuestReward(selected.quest.id);
-        if (rewards) {
-          vscode.window.showInformationMessage(`Claimed ${rewards.xp} XP and ${rewards.gold} Gold!`);
-        }
-      }
-    }
-  });
-
-  // Worker commands
-  const showWorkersCmd = vscode.commands.registerCommand('gitrpg.showWorkers', async () => {
-    if (!supabaseClient.isAuthenticated()) {
-      vscode.window.showWarningMessage('Connect your account first to manage workers!', 'Connect').then((action) => {
-        if (action === 'Connect') {
-          vscode.commands.executeCommand('gitrpg.connectAccount');
-        }
-      });
-      return;
-    }
-
-    const summary = await workerService.getWorkerSummary();
-    const workers = await workerService.getWorkers();
-
-    const options = [
-      `📊 Summary: ${summary.workerCount} workers, ${summary.totalGoldPerHour}/hr, ${summary.pendingGold} pending`,
-      `💰 Collect Gold (${summary.pendingGold} gold)`,
-      `🛒 Buy Worker (${summary.nextWorkerCost} gold)`,
-      ...workers.map((w, i) => `⚙️ Worker ${i + 1} - Lv.${w.level} (${w.gold_per_hour}/hr) [Upgrade: ${workerService.calculateUpgradeCost(w.level)} gold]`)
-    ];
-
-    const selected = await vscode.window.showQuickPick(options, {
-      placeHolder: 'Worker Management'
-    });
-
-    if (selected?.startsWith('💰 Collect')) {
-      const result = await workerService.collectAllGold();
-      if (result.success) {
-        vscode.window.showInformationMessage(`Collected ${result.goldCollected} gold!`);
-      } else {
-        vscode.window.showErrorMessage(result.error || 'Failed to collect gold');
-      }
-    } else if (selected?.startsWith('🛒 Buy')) {
-      const result = await workerService.purchaseWorker();
-      if (result.success) {
-        vscode.window.showInformationMessage('Worker purchased!');
-      } else {
-        vscode.window.showErrorMessage(result.error || 'Failed to purchase worker');
-      }
-    } else if (selected?.startsWith('⚙️ Worker')) {
-      const workerIndex = parseInt(selected.split(' ')[1]) - 1;
-      const worker = workers[workerIndex];
-      if (worker) {
-        const upgradeCost = workerService.calculateUpgradeCost(worker.level);
-        const action = await vscode.window.showQuickPick([`Upgrade (${upgradeCost} gold)`, 'Cancel'], {
-          placeHolder: `Worker ${workerIndex + 1} - Level ${worker.level}`
-        });
-
-        if (action?.startsWith('Upgrade')) {
-          const result = await workerService.upgradeWorker(worker.id);
-          if (result.success) {
-            vscode.window.showInformationMessage(`Worker upgraded to level ${result.worker?.level}!`);
-          } else {
-            vscode.window.showErrorMessage(result.error || 'Failed to upgrade worker');
-          }
-        }
-      }
-    }
-  });
-
-  const collectGoldCmd = vscode.commands.registerCommand('gitrpg.collectGold', async () => {
-    if (!supabaseClient.isAuthenticated()) {
-      vscode.window.showWarningMessage('Connect your account first!');
-      return;
-    }
-
-    const result = await workerService.collectAllGold();
-    if (result.success) {
-      vscode.window.showInformationMessage(`Collected ${result.goldCollected} gold from workers!`);
-    } else {
-      vscode.window.showErrorMessage(result.error || 'Failed to collect gold');
-    }
-  });
+  // Register all modular commands
+  const allCommands = registerAllCommands(context, allServices);
 
   context.subscriptions.push(
     showDashboardCmd,
     showCharacterCmd,
     startBattleCmd,
-    showBattleCmd,
-    checkCommitsCmd,
-    showLogCmd,
-    setNameCmd,
-    setClassCmd,
-    resetCmd,
-    showStatsCmd,
-    connectAccountCmd,
-    showFriendsCmd,
-    addFriendCmd,
-    showFriendCodeCmd,
-    viewDailyBossCmd,
-    challengeBossCmd,
-    showQuestsCmd,
-    showWorkersCmd,
-    collectGoldCmd
+    ...allCommands
   );
 
   // Register webview provider for sidebar
