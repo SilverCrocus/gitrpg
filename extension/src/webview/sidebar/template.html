@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {{CSP}}
+  <title>{{TITLE}}</title>
+  {{STYLES}}
+  {{DATA}}
+</head>
+<body>
+  <div class="character-preview"><img id="spriteImg" src="" alt="Character"></div>
+  <div class="char-name" id="charName">Loading...</div>
+  <div class="char-class" id="charClass">Level 1 Warrior</div>
+
+  <div class="stat">
+    <div class="stat-label">XP</div>
+    <div class="xp-bar"><div class="xp-bar-fill" id="xpBar" style="width: 0%"></div></div>
+    <div class="stat-value" id="xpValue">0 / 100</div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-label">Gold</div>
+    <div class="stat-value" id="goldValue">0</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="today-label">Today</div>
+  <div class="stat">
+    <div class="stat-label">Commits</div>
+    <div class="stat-value" id="commits">0</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">XP Earned</div>
+    <div class="stat-value" id="xpEarned">+0</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <button onclick="openDashboard()">Open Dashboard</button>
+  <button onclick="checkCommits()">Check Commits</button>
+
+  {{SCRIPT}}
+</body>
+</html>

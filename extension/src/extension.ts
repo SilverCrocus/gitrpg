@@ -12,6 +12,7 @@ import { QuestService } from './services/questService';
 import { WorkerService } from './services/workerService';
 import { registerAuthHandler } from './authHandler';
 import { DashboardPanel, DashboardServices } from './webview/dashboard/DashboardPanel';
+import { SidebarProvider } from './webview/sidebar/SidebarProvider';
 
 let statusBarItem: vscode.StatusBarItem;
 let stateManager: LocalStateManager;
@@ -174,9 +175,9 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   // Register webview provider for sidebar
-  const provider = new GitRPGViewProvider(context.extensionUri, stateManager);
+  const sidebarProvider = new SidebarProvider(context.extensionUri, stateManager);
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider('gitrpg.mainView', provider)
+    vscode.window.registerWebviewViewProvider('gitrpg.mainView', sidebarProvider)
   );
 
   // Start git tracking
@@ -194,182 +195,6 @@ export async function activate(context: vscode.ExtensionContext) {
       gitTracker.checkForNewCommits();
     }, 1000);
   });
-}
-
-class GitRPGViewProvider implements vscode.WebviewViewProvider {
-  private webviewView?: vscode.WebviewView;
-
-  constructor(
-    private readonly extensionUri: vscode.Uri,
-    private readonly stateManager: LocalStateManager
-  ) {}
-
-  resolveWebviewView(
-    webviewView: vscode.WebviewView,
-    context: vscode.WebviewViewResolveContext,
-    token: vscode.CancellationToken
-  ) {
-    this.webviewView = webviewView;
-
-    webviewView.webview.options = {
-      enableScripts: true,
-      localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'media')]
-    };
-
-    webviewView.webview.html = this.getSidebarContent(webviewView.webview);
-
-    // Update sidebar when state changes
-    this.stateManager.onStateChange(() => {
-      if (this.webviewView) {
-        this.webviewView.webview.html = this.getSidebarContent(this.webviewView.webview);
-      }
-    });
-
-    // Handle messages from sidebar
-    webviewView.webview.onDidReceiveMessage(message => {
-      if (message.type === 'command') {
-        vscode.commands.executeCommand(message.command);
-      }
-    });
-  }
-
-  private getSidebarContent(webview: vscode.Webview): string {
-    const char = this.stateManager.getCharacter();
-    const today = this.stateManager.getTodayStats();
-    const xpPercent = Math.round((char.xp / char.xpToNextLevel) * 100);
-
-    // Get sprite URI for the character's class
-    const classFolder = char.class.toLowerCase();
-    const spriteUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.extensionUri, 'media', 'sprites', 'characters', classFolder, 'idle.svg')
-    );
-
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'unsafe-inline'; img-src ${webview.cspSource} data:;">
-  <style>
-    body {
-      font-family: var(--vscode-font-family);
-      color: var(--vscode-foreground);
-      padding: 10px;
-      margin: 0;
-    }
-    .stat { margin: 8px 0; }
-    .stat-label { font-size: 11px; opacity: 0.7; }
-    .stat-value { font-size: 16px; font-weight: bold; }
-    .character-preview {
-      width: 80px;
-      height: 80px;
-      margin: 10px auto;
-      background: var(--vscode-editor-background);
-      border: 2px solid var(--vscode-textLink-foreground);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-    .character-preview img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-    .char-name {
-      text-align: center;
-      font-weight: bold;
-      margin: 5px 0;
-    }
-    .char-class {
-      text-align: center;
-      font-size: 12px;
-      opacity: 0.8;
-      margin-bottom: 10px;
-    }
-    .xp-bar {
-      height: 6px;
-      background: var(--vscode-progressBar-background);
-      border-radius: 3px;
-      overflow: hidden;
-      margin: 4px 0;
-    }
-    .xp-bar-fill {
-      height: 100%;
-      background: var(--vscode-textLink-foreground);
-    }
-    button {
-      width: 100%;
-      padding: 8px;
-      margin: 4px 0;
-      background: var(--vscode-button-background);
-      color: var(--vscode-button-foreground);
-      border: none;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    button:hover {
-      background: var(--vscode-button-hoverBackground);
-    }
-    .divider {
-      border-top: 1px solid var(--vscode-panel-border);
-      margin: 12px 0;
-    }
-    .today-label {
-      font-size: 11px;
-      opacity: 0.7;
-      margin-bottom: 8px;
-    }
-  </style>
-</head>
-<body>
-  <div class="character-preview"><img src="${spriteUri}" alt="${char.class}"></div>
-  <div class="char-name">${char.name}</div>
-  <div class="char-class">Level ${char.level} ${char.class}</div>
-
-  <div class="stat">
-    <div class="stat-label">XP</div>
-    <div class="xp-bar"><div class="xp-bar-fill" style="width: ${xpPercent}%"></div></div>
-    <div class="stat-value">${char.xp} / ${char.xpToNextLevel}</div>
-  </div>
-
-  <div class="stat">
-    <div class="stat-label">Gold</div>
-    <div class="stat-value">💰 ${char.gold}</div>
-  </div>
-
-  <div class="divider"></div>
-
-  <div class="today-label">📊 Today</div>
-  <div class="stat">
-    <div class="stat-label">Commits</div>
-    <div class="stat-value">${today.commits}</div>
-  </div>
-  <div class="stat">
-    <div class="stat-label">XP Earned</div>
-    <div class="stat-value">+${today.xpEarned}</div>
-  </div>
-
-  <div class="divider"></div>
-
-  <button onclick="openDashboard()">📊 Open Dashboard</button>
-  <button onclick="checkCommits()">🔄 Check Commits</button>
-
-  <script>
-    const vscode = acquireVsCodeApi();
-
-    function openDashboard() {
-      vscode.postMessage({ type: 'command', command: 'gitrpg.showDashboard' });
-    }
-
-    function checkCommits() {
-      vscode.postMessage({ type: 'command', command: 'gitrpg.checkCommits' });
-    }
-  </script>
-</body>
-</html>`;
-  }
 }
 
 function updateStatusBar() {
