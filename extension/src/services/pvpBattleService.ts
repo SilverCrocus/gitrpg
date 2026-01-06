@@ -1,6 +1,6 @@
 import { SupabaseClientService, DbUser, DbBattle } from './supabaseClient';
 import { BattleEngine } from './battleEngine';
-import type { BattleFighter, BattleResult } from '../types';
+import type { BattleFighter, BattleResult, CharacterClass } from '../types';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface PvpBattleChallenge {
@@ -131,7 +131,7 @@ export class PvpBattleService {
     const challenger: BattleFighter = {
       id: challengerUser.id,
       name: challengerUser.display_name,
-      class: challengerUser.character_class.toLowerCase() as any,
+      class: challengerUser.character_class as CharacterClass,
       level: challengerUser.level,
       stats: {
         maxHp: challengerUser.stats_max_hp,
@@ -147,7 +147,7 @@ export class PvpBattleService {
     const opponent: BattleFighter = {
       id: opponentUser.id,
       name: opponentUser.display_name,
-      class: opponentUser.character_class.toLowerCase() as any,
+      class: opponentUser.character_class as CharacterClass,
       level: opponentUser.level,
       stats: {
         maxHp: opponentUser.stats_max_hp,

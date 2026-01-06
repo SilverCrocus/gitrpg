@@ -7,6 +7,7 @@ import { buildWebviewHtml } from '../webviewUtils';
  */
 export class SidebarProvider implements vscode.WebviewViewProvider {
   private webviewView?: vscode.WebviewView;
+  private unsubscribeFromState: (() => void) | null = null;
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -28,9 +29,17 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     webviewView.webview.html = this.getHtml(webviewView.webview);
 
     // Update sidebar when state changes
-    this.stateManager.onStateChange(() => {
+    this.unsubscribeFromState = this.stateManager.onStateChange(() => {
       if (this.webviewView) {
         this.sendStateToWebview();
+      }
+    });
+
+    // Clean up subscription when webview is disposed
+    webviewView.onDidDispose(() => {
+      if (this.unsubscribeFromState) {
+        this.unsubscribeFromState();
+        this.unsubscribeFromState = null;
       }
     });
 

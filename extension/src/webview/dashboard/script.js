@@ -234,19 +234,31 @@ function renderPendingRequests(friendRequests, pvpChallenges, bossInvites) {
   list.innerHTML = html;
 }
 
-// Listen for state updates from the extension
+// Listen for messages from the extension
 window.addEventListener('message', event => {
   const message = event.data;
 
-  if (message.type === 'stateUpdate') {
-    const char = message.character;
-    const today = message.todayStats;
+  if (message.type === 'navigate') {
+    // Handle navigation to specific view
+    const view = message.view;
+    // Scroll to the appropriate section based on view
+    if (view === 'character') {
+      document.querySelector('.character-header')?.scrollIntoView({ behavior: 'smooth' });
+    } else if (view === 'battle') {
+      // For battle view, we could show a battle section if it exists
+      console.log('Navigate to battle view');
+    }
+    // 'dashboard' is the default, no scroll needed
+  } else if (message.type === 'stateUpdate') {
+    // Update character UI if data provided
+    if (message.character) {
+      updateCharacterUI(message.character);
+    }
 
-    // Update character UI
-    updateCharacterUI(char);
-
-    // Update today's stats
-    updateTodayStatsUI(today);
+    // Update today's stats if data provided
+    if (message.todayStats) {
+      updateTodayStatsUI(message.todayStats);
+    }
 
     // Render quests, workers, and pending requests
     renderQuests(message.quests, message.isAuthenticated);

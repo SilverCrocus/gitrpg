@@ -56,11 +56,13 @@ window.addEventListener('message', event => {
   }
 });
 
-// Initialize on load
-init();
-
-// Attach event listeners (CSP blocks inline onclick handlers)
+// Initialize on load and attach event listeners
+// (CSP blocks inline onclick handlers, so we use addEventListener)
 document.addEventListener('DOMContentLoaded', function() {
+  // Initialize UI with data
+  init();
+
+  // Attach button event listeners
   const openDashboardBtn = document.getElementById('openDashboardBtn');
   const checkCommitsBtn = document.getElementById('checkCommitsBtn');
 

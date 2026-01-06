@@ -6,6 +6,7 @@ import { LocalStateManager } from '../services/localStateManager';
  */
 export class StatusBarManager implements vscode.Disposable {
   private statusBarItem: vscode.StatusBarItem;
+  private unsubscribeFromState: (() => void) | null = null;
 
   constructor(
     private readonly stateManager: LocalStateManager,
@@ -21,7 +22,7 @@ export class StatusBarManager implements vscode.Disposable {
     this.statusBarItem.show();
 
     // Update when state changes
-    this.stateManager.onStateChange(() => {
+    this.unsubscribeFromState = this.stateManager.onStateChange(() => {
       this.update();
     });
   }
@@ -76,6 +77,9 @@ export class StatusBarManager implements vscode.Disposable {
    * Dispose of the status bar item
    */
   public dispose(): void {
+    if (this.unsubscribeFromState) {
+      this.unsubscribeFromState();
+    }
     this.statusBarItem.dispose();
   }
 }

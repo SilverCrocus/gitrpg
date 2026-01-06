@@ -1,7 +1,7 @@
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { SupabaseClientService } from './supabaseClient';
 import { BOSS_DEFINITIONS, createBossInstance, BOSS_REWARDS } from './bossService';
-import type { BossInstance, BattleFighter } from '../types';
+import type { BossInstance, BattleFighter, CharacterClass } from '../types';
 
 export interface BossBattle {
   id: string;
@@ -154,6 +154,26 @@ export class CoopBattleService {
     return { success: true, battle: data as BossBattle };
   }
 
+  async declineBossInvite(lobbyId: string): Promise<{ success: boolean; error?: string }> {
+    const client = this.supabase.getClient();
+    const user = this.supabase.getCurrentUser();
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    const { error } = await client
+      .from('boss_battles')
+      .update({ status: 'abandoned' })
+      .eq('id', lobbyId)
+      .eq('player2_id', user.id)
+      .eq('status', 'lobby');
+
+    if (error) {
+      console.error('Error declining boss invite:', error);
+      return { success: false, error: 'Failed to decline invite' };
+    }
+
+    return { success: true };
+  }
+
   async getPendingBossInvites(): Promise<BossChallenge[]> {
     const client = this.supabase.getClient();
     const user = this.supabase.getCurrentUser();
@@ -220,7 +240,7 @@ export class CoopBattleService {
     const player1: BattleFighter = {
       id: battle.player1.id,
       name: battle.player1.display_name,
-      class: battle.player1.character_class.toLowerCase() as any,
+      class: battle.player1.character_class as CharacterClass,
       level: battle.player1.level,
       stats: {
         maxHp: battle.player1.stats_max_hp,
@@ -236,7 +256,7 @@ export class CoopBattleService {
     const player2: BattleFighter | null = battle.player2 ? {
       id: battle.player2.id,
       name: battle.player2.display_name,
-      class: battle.player2.character_class.toLowerCase() as any,
+      class: battle.player2.character_class as CharacterClass,
       level: battle.player2.level,
       stats: {
         maxHp: battle.player2.stats_max_hp,

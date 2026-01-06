@@ -33,6 +33,7 @@ export class DashboardPanel {
   private readonly extensionUri: vscode.Uri;
   private readonly services: DashboardServices;
   private disposables: vscode.Disposable[] = [];
+  private unsubscribeFromState: (() => void) | null = null;
 
   /**
    * Creates or shows the dashboard panel
@@ -93,8 +94,7 @@ export class DashboardPanel {
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
 
     // Update webview when state changes
-    // Note: onStateChange doesn't return a disposable, so we just register the callback
-    services.stateManager.onStateChange(() => {
+    this.unsubscribeFromState = services.stateManager.onStateChange(() => {
       this.sendStateToWebview();
     });
 
@@ -327,13 +327,12 @@ export class DashboardPanel {
       }
 
       case 'declineBoss': {
-        // Mark the lobby as abandoned
-        const client = supabaseClient.getClient();
-        await client
-          .from('boss_battles')
-          .update({ status: 'abandoned' })
-          .eq('id', message.lobbyId);
-        vscode.window.showInformationMessage('Boss raid declined.');
+        const result = await coopBattleService.declineBossInvite(message.lobbyId);
+        if (!result.success) {
+          vscode.window.showErrorMessage(result.error || 'Failed to decline boss invite');
+        } else {
+          vscode.window.showInformationMessage('Boss raid declined.');
+        }
         await this.sendStateToWebview();
         break;
       }
@@ -344,6 +343,10 @@ export class DashboardPanel {
    * Dispose of the panel and clean up resources
    */
   public dispose(): void {
+    if (this.unsubscribeFromState) {
+      this.unsubscribeFromState();
+    }
+
     DashboardPanel.currentPanel = undefined;
 
     // Clean up resources

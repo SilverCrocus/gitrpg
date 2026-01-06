@@ -80,8 +80,14 @@ export class LocalStateManager {
     }
   }
 
-  onStateChange(callback: (state: LocalGameState) => void): void {
+  onStateChange(callback: (state: LocalGameState) => void): () => void {
     this.onStateChangeCallbacks.push(callback);
+    return () => {
+      const index = this.onStateChangeCallbacks.indexOf(callback);
+      if (index > -1) {
+        this.onStateChangeCallbacks.splice(index, 1);
+      }
+    };
   }
 
   getState(): LocalGameState {
