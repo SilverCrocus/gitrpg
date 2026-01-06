@@ -13,8 +13,9 @@ import { WorkerService } from './services/workerService';
 import { registerAuthHandler } from './authHandler';
 import { DashboardPanel, DashboardServices } from './webview/dashboard/DashboardPanel';
 import { SidebarProvider } from './webview/sidebar/SidebarProvider';
+import { StatusBarManager } from './statusbar/StatusBarManager';
 
-let statusBarItem: vscode.StatusBarItem;
+let statusBarManager: StatusBarManager;
 let stateManager: LocalStateManager;
 let gitTracker: GitTrackingService;
 let supabaseClient: SupabaseClientService;
@@ -107,20 +108,12 @@ export async function activate(context: vscode.ExtensionContext) {
     });
   }
 
-  // Create status bar item (right side)
-  statusBarItem = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Right,
-    50
-  );
-  statusBarItem.command = 'gitrpg.showDashboard';
-  updateStatusBar();
-  statusBarItem.show();
-  context.subscriptions.push(statusBarItem);
+  // Create status bar manager (auto-updates on state changes)
+  statusBarManager = new StatusBarManager(stateManager);
+  context.subscriptions.push(statusBarManager);
 
-  // Update status bar when state changes and sync profile to cloud
+  // Sync profile to cloud when character updates
   stateManager.onStateChange(async () => {
-    updateStatusBar();
-    // Sync profile to cloud when character updates
     if (supabaseClient.isAuthenticated()) {
       await profileSync.syncProfileToCloud();
     }
@@ -197,35 +190,10 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 }
 
-function updateStatusBar() {
-  const char = stateManager.getCharacter();
-  const today = stateManager.getTodayStats();
-  const xpPercent = Math.round((char.xp / char.xpToNextLevel) * 100);
-  const xpBar = getProgressBar(xpPercent);
-
-  statusBarItem.text = `$(person) Lv.${char.level} ${char.class} ${xpBar} $(zap) ${today.commits}`;
-  statusBarItem.tooltip = new vscode.MarkdownString(
-    `**${char.name}** - Level ${char.level} ${char.class}\n\n` +
-    `XP: ${char.xp} / ${char.xpToNextLevel}\n\n` +
-    `Gold: 💰 ${char.gold}\n\n` +
-    `---\n\n` +
-    `**Today's Activity:**\n\n` +
-    `Commits: ${today.commits}\n\n` +
-    `Lines: +${today.linesAdded} / -${today.linesRemoved}\n\n` +
-    `XP Earned: +${today.xpEarned}\n\n` +
-    `*Click to open dashboard*`
-  );
-}
-
-function getProgressBar(percent: number): string {
-  const filled = Math.round(percent / 10);
-  const empty = 10 - filled;
-  return '[' + '█'.repeat(filled) + '░'.repeat(empty) + ']';
-}
 
 export function deactivate() {
-  if (statusBarItem) {
-    statusBarItem.dispose();
+  if (statusBarManager) {
+    statusBarManager.dispose();
   }
   if (gitTracker) {
     gitTracker.stop();
