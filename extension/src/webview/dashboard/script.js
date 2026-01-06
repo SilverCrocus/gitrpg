@@ -120,7 +120,7 @@ function renderQuests(quests, isAuthenticated) {
     html += '  </div>';
     html += '  <div class="quest-progress-text">' + quest.requirement_current + ' / ' + quest.requirement_target + '</div>';
     if (isComplete && !isClaimed) {
-      html += '  <button class="claim-btn" onclick="claimQuest(\'' + quest.id + '\')">Claim Reward</button>';
+      html += '  <button class="claim-btn" data-quest-id="' + quest.id + '">Claim Reward</button>';
     }
     html += '</div>';
   }
@@ -195,8 +195,8 @@ function renderPendingRequests(friendRequests, pvpChallenges, bossInvites) {
     html += '    <div class="request-detail">Lv.' + req.level + ' ' + req.characterClass + '</div>';
     html += '  </div>';
     html += '  <div class="request-actions">';
-    html += '    <button class="request-btn accept" onclick="acceptFriendRequest(\'' + req.id + '\')">Accept</button>';
-    html += '    <button class="request-btn decline" onclick="declineFriendRequest(\'' + req.id + '\')">Decline</button>';
+    html += '    <button class="request-btn accept accept-friend-btn" data-friend-id="' + req.id + '">Accept</button>';
+    html += '    <button class="request-btn decline decline-friend-btn" data-friend-id="' + req.id + '">Decline</button>';
     html += '  </div>';
     html += '</div>';
   }
@@ -210,8 +210,8 @@ function renderPendingRequests(friendRequests, pvpChallenges, bossInvites) {
     html += '    <div class="request-detail">Lv.' + challenge.challengerLevel + ' ' + challenge.challengerClass + '</div>';
     html += '  </div>';
     html += '  <div class="request-actions">';
-    html += '    <button class="request-btn accept" onclick="acceptPvpChallenge(\'' + challenge.id + '\')">Fight!</button>';
-    html += '    <button class="request-btn decline" onclick="declinePvpChallenge(\'' + challenge.id + '\')">Decline</button>';
+    html += '    <button class="request-btn accept accept-pvp-btn" data-battle-id="' + challenge.id + '">Fight!</button>';
+    html += '    <button class="request-btn decline decline-pvp-btn" data-battle-id="' + challenge.id + '">Decline</button>';
     html += '  </div>';
     html += '</div>';
   }
@@ -225,8 +225,8 @@ function renderPendingRequests(friendRequests, pvpChallenges, bossInvites) {
     html += '    <div class="request-detail">vs ' + invite.bossName + '</div>';
     html += '  </div>';
     html += '  <div class="request-actions">';
-    html += '    <button class="request-btn accept" onclick="joinBossBattle(\'' + invite.lobbyId + '\')">Join!</button>';
-    html += '    <button class="request-btn decline" onclick="declineBossInvite(\'' + invite.lobbyId + '\')">Decline</button>';
+    html += '    <button class="request-btn accept join-boss-btn" data-lobby-id="' + invite.lobbyId + '">Join!</button>';
+    html += '    <button class="request-btn decline decline-boss-btn" data-lobby-id="' + invite.lobbyId + '">Decline</button>';
     html += '  </div>';
     html += '</div>';
   }
@@ -253,4 +253,55 @@ window.addEventListener('message', event => {
     renderWorkers(message.workerSummary, message.isAuthenticated);
     renderPendingRequests(message.pendingFriendRequests, message.pendingPvpChallenges, message.pendingBossInvites);
   }
+});
+
+// Attach event listeners to static buttons
+// (CSP blocks inline onclick handlers, so we use addEventListener)
+document.addEventListener('DOMContentLoaded', function() {
+  // Action buttons
+  const checkCommitsBtn = document.getElementById('checkCommitsBtn');
+  const changeNameBtn = document.getElementById('changeNameBtn');
+  const changeClassBtn = document.getElementById('changeClassBtn');
+  const collectGoldBtn = document.getElementById('collectGoldBtn');
+  const manageWorkersBtn = document.getElementById('manageWorkersBtn');
+
+  if (checkCommitsBtn) checkCommitsBtn.addEventListener('click', checkCommits);
+  if (changeNameBtn) changeNameBtn.addEventListener('click', changeName);
+  if (changeClassBtn) changeClassBtn.addEventListener('click', changeClass);
+  if (collectGoldBtn) collectGoldBtn.addEventListener('click', collectGold);
+  if (manageWorkersBtn) manageWorkersBtn.addEventListener('click', manageWorkers);
+
+  // Event delegation for dynamically created buttons
+  document.addEventListener('click', function(e) {
+    const target = e.target;
+
+    // Quest claim buttons
+    if (target.classList.contains('claim-btn') && target.dataset.questId) {
+      claimQuest(target.dataset.questId);
+    }
+
+    // Friend request buttons
+    if (target.classList.contains('accept-friend-btn') && target.dataset.friendId) {
+      acceptFriendRequest(target.dataset.friendId);
+    }
+    if (target.classList.contains('decline-friend-btn') && target.dataset.friendId) {
+      declineFriendRequest(target.dataset.friendId);
+    }
+
+    // PvP challenge buttons
+    if (target.classList.contains('accept-pvp-btn') && target.dataset.battleId) {
+      acceptPvpChallenge(target.dataset.battleId);
+    }
+    if (target.classList.contains('decline-pvp-btn') && target.dataset.battleId) {
+      declinePvpChallenge(target.dataset.battleId);
+    }
+
+    // Boss battle buttons
+    if (target.classList.contains('join-boss-btn') && target.dataset.lobbyId) {
+      joinBossBattle(target.dataset.lobbyId);
+    }
+    if (target.classList.contains('decline-boss-btn') && target.dataset.lobbyId) {
+      declineBossInvite(target.dataset.lobbyId);
+    }
+  });
 });
