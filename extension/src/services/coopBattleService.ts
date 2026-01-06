@@ -1,7 +1,7 @@
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { SupabaseClientService } from './supabaseClient';
-import { BOSS_DEFINITIONS, createBossInstance, BossInstance, BOSS_REWARDS } from './bossService';
-import { BattleFighter } from './battleEngine';
+import { BOSS_DEFINITIONS, createBossInstance, BOSS_REWARDS } from './bossService';
+import type { BossInstance, BattleFighter } from '../types';
 
 export interface BossBattle {
   id: string;

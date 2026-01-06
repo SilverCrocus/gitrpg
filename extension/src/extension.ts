@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { registerBattleCommand } from './commands/battleCommand';
-import { LocalStateManager, CharacterData, TodayStats } from './services/localStateManager';
+import { LocalStateManager } from './services/localStateManager';
+import type { Character, TodayStats } from './types';
 import { GitTrackingService } from './services/gitTrackingService';
 import { SupabaseClientService } from './services/supabaseClient';
 import { ProfileSyncService } from './services/profileSyncService';

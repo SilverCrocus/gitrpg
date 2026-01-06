@@ -1,5 +1,6 @@
 import { SupabaseClientService, DbUser, DbBattle } from './supabaseClient';
-import { BattleEngine, BattleFighter, BattleResult } from './battleEngine';
+import { BattleEngine } from './battleEngine';
+import type { BattleFighter, BattleResult } from '../types';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface PvpBattleChallenge {

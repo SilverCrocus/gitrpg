@@ -1,57 +1,26 @@
 import * as vscode from 'vscode';
+import {
+  Character,
+  CharacterStats,
+  TodayStats,
+  TrackingState,
+  LocalGameState,
+  ActivityResult,
+  CharacterClass,
+} from '../types';
+import {
+  CLASS_BASE_STATS,
+  xpForLevel,
+  calculateStatsForLevel,
+  XP_CONFIG,
+  LEVEL_CONFIG,
+} from '../config/classConfig';
 
-export interface CharacterData {
-  name: string;
-  class: 'Warrior' | 'Mage' | 'Rogue' | 'Archer';
-  level: number;
-  xp: number;
-  xpToNextLevel: number;
-  gold: number;
-  stats: {
-    maxHp: number;
-    attack: number;
-    defense: number;
-    speed: number;
-    critChance: number;
-    critDamage: number;
-  };
-}
-
-export interface TodayStats {
-  date: string; // YYYY-MM-DD
-  commits: number;
-  linesAdded: number;
-  linesRemoved: number;
-  filesChanged: number;
-  xpEarned: number;
-}
-
-export interface TrackingState {
-  lastCheckedAt: string; // ISO date
-  processedCommitHashes: string[]; // Prevent double-counting
-}
-
-export interface LocalGameState {
-  character: CharacterData;
-  todayStats: TodayStats;
-  tracking: TrackingState;
-  gitEmail: string | null;
-}
+// Re-export CharacterData for backwards compatibility
+export type { Character as CharacterData } from '../types';
+export type { TodayStats, TrackingState, LocalGameState } from '../types';
 
 const STATE_KEY = 'gitrpg.gameState';
-
-// XP required for each level (increases by 50% each level)
-function xpForLevel(level: number): number {
-  return Math.floor(100 * Math.pow(1.5, level - 1));
-}
-
-// Base stats by class
-const CLASS_BASE_STATS: Record<string, CharacterData['stats']> = {
-  Warrior: { maxHp: 120, attack: 15, defense: 12, speed: 8, critChance: 0.1, critDamage: 1.5 },
-  Mage: { maxHp: 80, attack: 18, defense: 6, speed: 10, critChance: 0.15, critDamage: 1.8 },
-  Rogue: { maxHp: 90, attack: 14, defense: 8, speed: 15, critChance: 0.25, critDamage: 2.0 },
-  Archer: { maxHp: 85, attack: 16, defense: 7, speed: 12, critChance: 0.2, critDamage: 1.7 },
-};
 
 function getDefaultState(): LocalGameState {
   const today = new Date().toISOString().split('T')[0];
@@ -119,7 +88,7 @@ export class LocalStateManager {
     return { ...this.state };
   }
 
-  getCharacter(): CharacterData {
+  getCharacter(): Character {
     return { ...this.state.character };
   }
 
@@ -174,7 +143,7 @@ export class LocalStateManager {
     return new Date(this.state.tracking.lastCheckedAt);
   }
 
-  async addActivity(commits: number, linesAdded: number, linesRemoved: number, filesChanged: number): Promise<{ xpEarned: number; leveledUp: boolean; newLevel: number }> {
+  async addActivity(commits: number, linesAdded: number, linesRemoved: number, filesChanged: number): Promise<ActivityResult> {
     this.resetTodayStatsIfNewDay();
 
     // Update today's stats
@@ -197,14 +166,12 @@ export class LocalStateManager {
       this.state.character.xp -= this.state.character.xpToNextLevel;
       this.state.character.level++;
       this.state.character.xpToNextLevel = xpForLevel(this.state.character.level + 1);
-      this.state.character.gold += 50 * this.state.character.level; // Gold reward on level up
+      this.state.character.gold += LEVEL_CONFIG.goldPerLevel * this.state.character.level;
       leveledUp = true;
 
-      // Increase stats on level up
+      // Increase stats on level up using centralized calculation
       const classStats = CLASS_BASE_STATS[this.state.character.class];
-      this.state.character.stats.maxHp = Math.floor(classStats.maxHp * (1 + (this.state.character.level - 1) * 0.1));
-      this.state.character.stats.attack = Math.floor(classStats.attack * (1 + (this.state.character.level - 1) * 0.08));
-      this.state.character.stats.defense = Math.floor(classStats.defense * (1 + (this.state.character.level - 1) * 0.08));
+      this.state.character.stats = calculateStatsForLevel(classStats, this.state.character.level);
     }
 
     await this.saveState();
@@ -217,21 +184,15 @@ export class LocalStateManager {
   }
 
   private calculateXp(commits: number, linesAdded: number, linesRemoved: number, filesChanged: number): number {
-    const XP_PER_COMMIT = 10;
-    const XP_PER_LINE_ADDED = 0.5;
-    const XP_PER_LINE_REMOVED = 0.25;
-    const XP_PER_FILE = 2;
-    const MAX_LINES_PER_COMMIT = 500; // Cap to prevent gaming
-
     // Cap lines
-    const cappedAdded = Math.min(linesAdded, MAX_LINES_PER_COMMIT * commits);
-    const cappedRemoved = Math.min(linesRemoved, MAX_LINES_PER_COMMIT * commits);
+    const cappedAdded = Math.min(linesAdded, XP_CONFIG.maxLinesPerCommit * commits);
+    const cappedRemoved = Math.min(linesRemoved, XP_CONFIG.maxLinesPerCommit * commits);
 
     return Math.floor(
-      commits * XP_PER_COMMIT +
-      cappedAdded * XP_PER_LINE_ADDED +
-      cappedRemoved * XP_PER_LINE_REMOVED +
-      filesChanged * XP_PER_FILE
+      commits * XP_CONFIG.xpPerCommit +
+      cappedAdded * XP_CONFIG.xpPerLineAdded +
+      cappedRemoved * XP_CONFIG.xpPerLineRemoved +
+      filesChanged * XP_CONFIG.xpPerFile
     );
   }
 
@@ -240,13 +201,10 @@ export class LocalStateManager {
     await this.saveState();
   }
 
-  async setCharacterClass(className: 'Warrior' | 'Mage' | 'Rogue' | 'Archer'): Promise<void> {
+  async setCharacterClass(className: CharacterClass): Promise<void> {
     this.state.character.class = className;
-    this.state.character.stats = { ...CLASS_BASE_STATS[className] };
-    // Recalculate stats for current level
-    this.state.character.stats.maxHp = Math.floor(CLASS_BASE_STATS[className].maxHp * (1 + (this.state.character.level - 1) * 0.1));
-    this.state.character.stats.attack = Math.floor(CLASS_BASE_STATS[className].attack * (1 + (this.state.character.level - 1) * 0.08));
-    this.state.character.stats.defense = Math.floor(CLASS_BASE_STATS[className].defense * (1 + (this.state.character.level - 1) * 0.08));
+    // Recalculate stats for current level using centralized calculation
+    this.state.character.stats = calculateStatsForLevel(CLASS_BASE_STATS[className], this.state.character.level);
     await this.saveState();
   }
 

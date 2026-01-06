@@ -1,29 +1,15 @@
-import type { CharacterStats, CharacterClass, BattleAction } from '../types';
+import type {
+  CharacterStats,
+  CharacterClass,
+  BattleAction,
+  BattleFighter,
+  DamageResult,
+  BattleResult,
+  BattleRewards,
+} from '../types';
 
-export interface BattleFighter {
-  id: string;
-  name: string;
-  class: CharacterClass;
-  level: number;
-  stats: CharacterStats;
-  currentHp: number;
-}
-
-export interface DamageResult {
-  damage: number;
-  isCrit: boolean;
-}
-
-export interface BattleResult {
-  winner: BattleFighter;
-  loser: BattleFighter;
-  actions: BattleAction[];
-  totalTurns: number;
-  rewards: {
-    xp: number;
-    gold: number;
-  };
-}
+// Re-export types for backwards compatibility
+export type { BattleFighter, DamageResult, BattleResult, BattleRewards } from '../types';
 
 // Damage formula: base = attack - (defense/2), with 10% variance
 export function calculateDamage(
