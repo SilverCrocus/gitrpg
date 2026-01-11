@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { WorkerService } from './workerService';
 
 export interface CharacterData {
   name: string;
@@ -227,12 +228,12 @@ export class LocalStateManager {
     const cappedAdded = Math.min(linesAdded, MAX_LINES_PER_COMMIT * commits);
     const cappedRemoved = Math.min(linesRemoved, MAX_LINES_PER_COMMIT * commits);
 
-    return Math.floor(
+    return Math.floor((
       commits * XP_PER_COMMIT +
       cappedAdded * XP_PER_LINE_ADDED +
       cappedRemoved * XP_PER_LINE_REMOVED +
       filesChanged * XP_PER_FILE
-    );
+    ) * (1 + new WorkerService().getTotalGoldPerHour() / 100));
   }
 
   async setCharacterName(name: string): Promise<void> {
