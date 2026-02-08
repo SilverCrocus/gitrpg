@@ -4,7 +4,9 @@ export function generateBattleHTML(
   fighter1Level: number,
   fighter2Name: string,
   fighter2Class: string,
-  fighter2Level: number
+  fighter2Level: number,
+  nonce: string,
+  cspSource: string
 ): string {
   return `
 <!DOCTYPE html>
@@ -12,6 +14,7 @@ export function generateBattleHTML(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}'; img-src ${cspSource} https: data:; font-src ${cspSource};">
   <title>GitRPG Battle</title>
   <style>
     * { box-sizing: border-box; }
@@ -282,7 +285,7 @@ export function generateBattleHTML(
     <button class="battle-btn" id="closeBtn">Close</button>
   </div>
 
-  <script>
+  <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
 
     document.getElementById('skipBtn').addEventListener('click', () => {

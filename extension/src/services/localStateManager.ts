@@ -215,7 +215,30 @@ export class LocalStateManager {
   }
 
   async addGold(amount: number): Promise<void> {
-    this.state.character.gold += amount;
+    this.state.character.gold = Math.max(0, this.state.character.gold + amount);
+    await this.saveState();
+  }
+
+  async setGold(amount: number): Promise<void> {
+    this.state.character.gold = Math.max(0, amount);
+    await this.saveState();
+  }
+
+  async addXp(amount: number): Promise<void> {
+    this.state.character.xp += amount;
+
+    // Check for level up
+    while (this.state.character.xp >= this.state.character.xpToNextLevel) {
+      this.state.character.xp -= this.state.character.xpToNextLevel;
+      this.state.character.level++;
+      this.state.character.xpToNextLevel = xpForLevel(this.state.character.level + 1);
+      this.state.character.gold += LEVEL_CONFIG.goldPerLevel * this.state.character.level;
+
+      // Recalculate stats on level up
+      const classStats = CLASS_BASE_STATS[this.state.character.class];
+      this.state.character.stats = calculateStatsForLevel(classStats, this.state.character.level);
+    }
+
     await this.saveState();
   }
 

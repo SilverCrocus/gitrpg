@@ -40,7 +40,9 @@ export interface GitCommit {
 
 export class GitTrackingService {
   private stateManager: LocalStateManager;
+  private questService: any = null; // Import would create circular dep
   private checkInterval: NodeJS.Timeout | null = null;
+  private repoScanInterval: NodeJS.Timeout | null = null;
   private outputChannel: vscode.OutputChannel;
   private isChecking: boolean = false;
   private discoveredRepos: string[] = [];
@@ -51,8 +53,15 @@ export class GitTrackingService {
     this.outputChannel = vscode.window.createOutputChannel('GitRPG');
   }
 
+  setQuestService(qs: any): void {
+    this.questService = qs;
+  }
+
   async start(): Promise<void> {
     this.log('GitRPG tracking started - Global mode');
+
+    // Detect git email for filtering commits
+    await this.detectGitEmail();
 
     // Discover git repos globally
     await this.discoverGitRepos();
@@ -66,7 +75,7 @@ export class GitTrackingService {
     }, 30000);
 
     // Re-scan for new repos every 5 minutes
-    setInterval(() => {
+    this.repoScanInterval = setInterval(() => {
       this.discoverGitRepos();
     }, 300000);
   }
@@ -205,6 +214,10 @@ export class GitTrackingService {
       clearInterval(this.checkInterval);
       this.checkInterval = null;
     }
+    if (this.repoScanInterval) {
+      clearInterval(this.repoScanInterval);
+      this.repoScanInterval = null;
+    }
     this.log('GitRPG tracking stopped');
   }
 
@@ -303,6 +316,16 @@ export class GitTrackingService {
 
         this.log(`Earned ${result.xpEarned} XP from ${totalNewCommits} commit(s)`);
 
+        // Update quest progress with today's cumulative stats
+        if (this.questService) {
+          const todayStats = this.stateManager.getTodayStats();
+          await this.questService.updateQuestProgress({
+            commits: todayStats.commits,
+            linesAdded: todayStats.linesAdded,
+            filesChanged: todayStats.filesChanged,
+          });
+        }
+
         // Show notification
         const char = this.stateManager.getCharacter();
         if (result.leveledUp) {
@@ -340,9 +363,10 @@ export class GitTrackingService {
 
   private async getCommitsSince(repoPath: string, since: Date): Promise<GitCommit[]> {
     const sinceStr = since.toISOString();
+    const gitEmail = this.stateManager.getGitEmail();
+    const authorFilter = gitEmail ? ` --author="${gitEmail}"` : '';
 
-    // No email filter - all commits in repos you've opened in VS Code count
-    const command = `git log --since="${sinceStr}" --pretty=format:"%H|%an|%ae|%aI|%s" --shortstat`;
+    const command = `git log --since="${sinceStr}"${authorFilter} --pretty=format:"%H|%an|%ae|%aI|%s" --shortstat`;
 
     try {
       const { stdout } = await execAsync(command, { cwd: repoPath, maxBuffer: 10 * 1024 * 1024 });
@@ -369,7 +393,7 @@ export class GitTrackingService {
       const author = parts[1] ?? '';
       const email = parts[2] ?? '';
       const dateStr = parts[3] ?? '';
-      const message = parts[4] ?? '';
+      const message = parts.slice(4).join('|');
 
       let filesChanged = 0;
       let insertions = 0;

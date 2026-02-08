@@ -1,4 +1,4 @@
-import { SupabaseClientService, DbUser, DbBattle } from './supabaseClient';
+import { SupabaseClientService, DbUser, DbBattle, dbUserToBattleFighter } from './supabaseClient';
 import { BattleEngine } from './battleEngine';
 import type { BattleFighter, BattleResult, CharacterClass } from '../types';
 import { RealtimeChannel } from '@supabase/supabase-js';
@@ -104,84 +104,88 @@ export class PvpBattleService {
     const user = this.supabase.getCurrentUser();
     if (!user) return null;
 
-    // Get battle and both users' data
-    const { data: battle, error: battleError } = await this.supabase.getClient()
+    // Atomically claim this battle (double-accept guard)
+    const { data: claimed, error: claimError } = await this.supabase.getClient()
       .from('battles')
-      .select(`
-        id,
-        challenger_id,
-        opponent_id,
-        challenger:users!battles_challenger_id_fkey(*),
-        opponent:users!battles_opponent_id_fkey(*)
-      `)
+      .update({ status: 'accepted' })
       .eq('id', battleId)
       .eq('opponent_id', user.id)
       .eq('status', 'pending')
+      .select()
       .single();
 
-    if (battleError || !battle) {
-      console.error('Accept challenge error:', battleError);
+    if (claimError || !claimed) {
+      return null; // Already accepted or not found
+    }
+
+    const { data: challengerUser } = await this.supabase.getClient()
+      .from('users')
+      .select('*')
+      .eq('id', claimed.challenger_id)
+      .single();
+
+    const { data: opponentUser } = await this.supabase.getClient()
+      .from('users')
+      .select('*')
+      .eq('id', claimed.opponent_id)
+      .single();
+
+    if (!challengerUser || !opponentUser) {
       return null;
     }
 
     // Create fighters from user data
-    const challengerUser = battle.challenger as unknown as DbUser;
-    const opponentUser = battle.opponent as unknown as DbUser;
-
-    const challenger: BattleFighter = {
-      id: challengerUser.id,
-      name: challengerUser.display_name,
-      class: challengerUser.character_class as CharacterClass,
-      level: challengerUser.level,
-      stats: {
-        maxHp: challengerUser.stats_max_hp,
-        attack: challengerUser.stats_attack,
-        defense: challengerUser.stats_defense,
-        speed: challengerUser.stats_speed,
-        critChance: challengerUser.stats_crit,
-        critDamage: 1.5,
-      },
-      currentHp: challengerUser.stats_max_hp,
-    };
-
-    const opponent: BattleFighter = {
-      id: opponentUser.id,
-      name: opponentUser.display_name,
-      class: opponentUser.character_class as CharacterClass,
-      level: opponentUser.level,
-      stats: {
-        maxHp: opponentUser.stats_max_hp,
-        attack: opponentUser.stats_attack,
-        defense: opponentUser.stats_defense,
-        speed: opponentUser.stats_speed,
-        critChance: opponentUser.stats_crit,
-        critDamage: 1.5,
-      },
-      currentHp: opponentUser.stats_max_hp,
-    };
+    const challenger = dbUserToBattleFighter(challengerUser as DbUser) as BattleFighter;
+    const opponent = dbUserToBattleFighter(opponentUser as DbUser) as BattleFighter;
 
     // Run the battle
     const engine = new BattleEngine(challenger, opponent);
     const result = engine.runBattle();
 
-    // Calculate rewards (winner gets full, loser gets 25%)
-    const baseXp = 50 + Math.max(challenger.level, opponent.level) * 10;
-    const baseGold = 25 + Math.max(challenger.level, opponent.level) * 5;
-
-    // Update battle record
+    // Update battle record with engine-calculated rewards
     const { error: updateError } = await this.supabase.getClient()
       .from('battles')
       .update({
         status: 'completed',
         battle_log: result.actions,
         winner_id: result.winner.id,
-        rewards: { xp: baseXp, gold: baseGold },
+        rewards: result.rewards,
         completed_at: new Date().toISOString(),
       })
       .eq('id', battleId);
 
     if (updateError) {
       console.error('Update battle error:', updateError);
+    }
+
+    // Apply rewards to winner (full rewards) and loser (25%)
+    const winnerId = result.winner.id;
+    const loserId = winnerId === challengerUser.id ? opponentUser.id : challengerUser.id;
+    const winnerRow = winnerId === challengerUser.id ? challengerUser : opponentUser;
+    const loserRow = winnerId === challengerUser.id ? opponentUser : challengerUser;
+
+    const { error: winnerError } = await this.supabase.getClient()
+      .from('users')
+      .update({
+        total_xp: (winnerRow as any).total_xp + result.rewards.xp,
+        gold: (winnerRow as any).gold + result.rewards.gold,
+      })
+      .eq('id', winnerId);
+
+    if (winnerError) {
+      console.error('Update winner rewards error:', winnerError);
+    }
+
+    const { error: loserError } = await this.supabase.getClient()
+      .from('users')
+      .update({
+        total_xp: (loserRow as any).total_xp + Math.floor(result.rewards.xp * 0.25),
+        gold: (loserRow as any).gold + Math.floor(result.rewards.gold * 0.25),
+      })
+      .eq('id', loserId);
+
+    if (loserError) {
+      console.error('Update loser rewards error:', loserError);
     }
 
     return result;
@@ -237,7 +241,7 @@ export class PvpBattleService {
     this.onChallengeCallback = onChallenge;
 
     this.battleChannel = this.supabase.getClient()
-      .channel('battle-notifications')
+      .channel(`battle-notifications:${user.id}`)
       .on(
         'postgres_changes',
         {

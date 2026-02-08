@@ -1,5 +1,7 @@
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import * as vscode from 'vscode';
+import { CLASS_BASE_STATS } from '../config/classConfig';
+import { CharacterClass } from '../types/index';
 
 // Database types
 export interface DbUser {
@@ -17,6 +19,9 @@ export interface DbUser {
   stats_defense: number;
   stats_speed: number;
   stats_crit: number;
+  gold: number;
+  last_quest_refresh: string | null;
+  last_boss_win_date: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -39,6 +44,41 @@ export interface DbBattle {
   rewards: { xp: number; gold: number } | null;
   created_at: string;
   completed_at: string | null;
+}
+
+/**
+ * Convert a database user record to a BattleFighter for use in battles
+ */
+export function dbUserToBattleFighter(user: DbUser, currentHp?: number): {
+  id: string;
+  name: string;
+  class: string;
+  level: number;
+  stats: {
+    maxHp: number;
+    attack: number;
+    defense: number;
+    speed: number;
+    critChance: number;
+    critDamage: number;
+  };
+  currentHp: number;
+} {
+  return {
+    id: user.id,
+    name: user.display_name,
+    class: user.character_class,
+    level: user.level,
+    stats: {
+      maxHp: user.stats_max_hp,
+      attack: user.stats_attack,
+      defense: user.stats_defense,
+      speed: user.stats_speed,
+      critChance: user.stats_crit,
+      critDamage: CLASS_BASE_STATS[user.character_class as CharacterClass]?.critDamage ?? 1.5,
+    },
+    currentHp: currentHp ?? user.stats_max_hp,
+  };
 }
 
 // Supabase configuration (anon key is public, safe to include)
@@ -64,9 +104,9 @@ export class SupabaseClientService {
     this.client = createClient(url, anonKey, {
       auth: {
         storage: {
-          getItem: (key: string) => this.context.globalState.get(key) || null,
-          setItem: (key: string, value: string) => { this.context.globalState.update(key, value); },
-          removeItem: (key: string) => { this.context.globalState.update(key, undefined); },
+          getItem: (key: string) => this.context.globalState.get(key) ?? null,
+          setItem: (key: string, value: string) => this.context.globalState.update(key, value),
+          removeItem: (key: string) => this.context.globalState.update(key, undefined),
         },
         autoRefreshToken: true,
         persistSession: true,
@@ -87,6 +127,10 @@ export class SupabaseClientService {
         this.currentUser = data.user;
         return true;
       }
+
+      // Session restoration failed - clear stale tokens
+      await this.context.globalState.update(ACCESS_TOKEN_KEY, undefined);
+      await this.context.globalState.update(REFRESH_TOKEN_KEY, undefined);
     }
 
     return false;

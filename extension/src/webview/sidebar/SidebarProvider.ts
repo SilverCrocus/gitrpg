@@ -19,6 +19,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken
   ): void {
+    // Clean up previous subscription if re-resolving
+    if (this.unsubscribeFromState) {
+      this.unsubscribeFromState();
+      this.unsubscribeFromState = null;
+    }
+
     this.webviewView = webviewView;
 
     webviewView.webview.options = {
@@ -67,22 +73,26 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   }
 
   /**
+   * Get sprite URI for a character class
+   */
+  private getSpriteUri(webview: vscode.Webview, characterClass: string): string {
+    const classFolder = characterClass.toLowerCase();
+    return webview.asWebviewUri(
+      vscode.Uri.joinPath(this.extensionUri, 'media', 'sprites', 'characters', classFolder, 'idle.svg')
+    ).toString();
+  }
+
+  /**
    * Get initial data to inject into the webview
    */
   private getInitialData(webview: vscode.Webview): Record<string, unknown> {
     const char = this.stateManager.getCharacter();
     const today = this.stateManager.getTodayStats();
 
-    // Get sprite URI for the character's class
-    const classFolder = char.class.toLowerCase();
-    const spriteUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.extensionUri, 'media', 'sprites', 'characters', classFolder, 'idle.svg')
-    ).toString();
-
     return {
       character: char,
       todayStats: today,
-      spriteUri
+      spriteUri: this.getSpriteUri(webview, char.class)
     };
   }
 
@@ -97,17 +107,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     const char = this.stateManager.getCharacter();
     const today = this.stateManager.getTodayStats();
 
-    // Get sprite URI for the character's class
-    const classFolder = char.class.toLowerCase();
-    const spriteUri = this.webviewView.webview.asWebviewUri(
-      vscode.Uri.joinPath(this.extensionUri, 'media', 'sprites', 'characters', classFolder, 'idle.svg')
-    ).toString();
-
     this.webviewView.webview.postMessage({
       type: 'stateUpdate',
       character: char,
       todayStats: today,
-      spriteUri
+      spriteUri: this.getSpriteUri(this.webviewView.webview, char.class)
     });
   }
 }

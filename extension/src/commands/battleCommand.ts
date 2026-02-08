@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { generateBattleHTML } from '../webview/battleUI';
+import { getNonce } from '../webview/webviewUtils';
 import { BattleAnimationPlayer } from '../webview/battlePlayer';
 import type { BattleAction, CharacterClass } from '../types';
 
@@ -40,13 +41,16 @@ export async function showBattlePanel(
     }
   );
 
+  const nonce = getNonce();
   panel.webview.html = generateBattleHTML(
     battleData.fighter1.name,
     battleData.fighter1.class,
     battleData.fighter1.level,
     battleData.fighter2.name,
     battleData.fighter2.class,
-    battleData.fighter2.level
+    battleData.fighter2.level,
+    nonce,
+    panel.webview.cspSource
   );
 
   // Create animation player

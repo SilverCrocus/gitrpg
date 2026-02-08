@@ -17,19 +17,46 @@ function init() {
   }
 }
 
+/**
+ * Execute callback when DOM is ready, or immediately if already loaded
+ */
+function onReady(fn) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fn);
+  } else {
+    fn();
+  }
+}
+
+/**
+ * Safely set text content for an element by ID
+ */
+function setText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+/**
+ * Safely set a style property for an element by ID
+ */
+function setStyle(id, property, value) {
+  const el = document.getElementById(id);
+  if (el) el.style[property] = value;
+}
+
 function updateCharacter(char) {
-  document.getElementById('charName').textContent = char.name;
-  document.getElementById('charClass').textContent = `Level ${char.level} ${char.class}`;
+  setText('charName', char.name);
+  setText('charClass', `Level ${char.level} ${char.class}`);
 
   const xpPercent = Math.round((char.xp / char.xpToNextLevel) * 100);
-  document.getElementById('xpBar').style.width = `${xpPercent}%`;
-  document.getElementById('xpValue').textContent = `${char.xp} / ${char.xpToNextLevel}`;
-  document.getElementById('goldValue').textContent = `${char.gold}`;
+  setStyle('xpBar', 'width', `${xpPercent}%`);
+  setText('xpValue', `${char.xp} / ${char.xpToNextLevel}`);
+  setText('goldValue', `${char.gold}`);
 }
 
 function updateTodayStats(today) {
-  document.getElementById('commits').textContent = today.commits;
-  document.getElementById('xpEarned').textContent = `+${today.xpEarned}`;
+  setText('commits', today.commits);
+  setText('xpEarned', `+${today.xpEarned}`);
 }
 
 function openDashboard() {
@@ -58,7 +85,7 @@ window.addEventListener('message', event => {
 
 // Initialize on load and attach event listeners
 // (CSP blocks inline onclick handlers, so we use addEventListener)
-document.addEventListener('DOMContentLoaded', function() {
+onReady(function() {
   // Initialize UI with data
   init();
 

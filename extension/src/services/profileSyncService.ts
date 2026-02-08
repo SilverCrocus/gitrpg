@@ -1,5 +1,6 @@
 import { SupabaseClientService, DbUser } from './supabaseClient';
 import { LocalStateManager, CharacterData } from './localStateManager';
+import { xpForLevel } from '../config/classConfig';
 
 export class ProfileSyncService {
   private supabase: SupabaseClientService;
@@ -8,6 +9,14 @@ export class ProfileSyncService {
   constructor(supabase: SupabaseClientService, stateManager: LocalStateManager) {
     this.supabase = supabase;
     this.stateManager = stateManager;
+  }
+
+  private calculateCumulativeXp(level: number, currentXp: number): number {
+    let total = currentXp;
+    for (let l = 1; l < level; l++) {
+      total += xpForLevel(l + 1);
+    }
+    return total;
   }
 
   async syncProfileToCloud(): Promise<boolean> {
@@ -27,7 +36,8 @@ export class ProfileSyncService {
         display_name: char.name,
         character_class: char.class,
         level: char.level,
-        total_xp: char.xp,
+        total_xp: this.calculateCumulativeXp(char.level, char.xp),
+        gold: char.gold,
         stats_max_hp: char.stats.maxHp,
         stats_attack: char.stats.attack,
         stats_defense: char.stats.defense,
@@ -44,6 +54,35 @@ export class ProfileSyncService {
     }
 
     return true;
+  }
+
+  async hydrateLocalStateFromCloud(): Promise<void> {
+    if (!this.supabase.isAuthenticated()) {
+      return;
+    }
+
+    const profile = await this.getMyProfile();
+    if (!profile) {
+      return;
+    }
+
+    const localGold = this.stateManager.getCharacter().gold;
+    const cloudGold = profile.gold ?? 0;
+    const resolvedGold = Math.max(localGold, cloudGold);
+
+    // Write the resolved gold to local state
+    await this.stateManager.setGold(resolvedGold);
+
+    // Write the resolved gold to Supabase if local was higher
+    if (localGold > cloudGold) {
+      const user = this.supabase.getCurrentUser();
+      if (user) {
+        await this.supabase.getClient()
+          .from('users')
+          .update({ gold: resolvedGold })
+          .eq('id', user.id);
+      }
+    }
   }
 
   async getMyProfile(): Promise<DbUser | null> {
@@ -93,7 +132,7 @@ export class ProfileSyncService {
         display_name: char.name,
         character_class: char.class,
         level: char.level,
-        total_xp: char.xp,
+        total_xp: this.calculateCumulativeXp(char.level, char.xp),
         stats_max_hp: char.stats.maxHp,
         stats_attack: char.stats.attack,
         stats_defense: char.stats.defense,

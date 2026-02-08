@@ -1,110 +1,132 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
   <style>
     :root {
-      --armor-primary: #6B7B8C;
-      --armor-secondary: #4A5568;
-      --armor-highlight: #8B9CAD;
-      --skin: #D4A574;
-      --skin-shadow: #B8956A;
-      --helmet: #5C6670;
-      --helmet-highlight: #7A8A9A;
-      --sword-blade: #E8E8E8;
+      --armor-primary: #8A9BB5;
+      --armor-secondary: #6B7D94;
+      --armor-highlight: #B0C4DE;
+      --armor-dark: #4A5568;
+      --skin: #E8C4A0;
+      --skin-shadow: #D4A878;
+      --hair: #3D2B1F;
+      --eye-color: #6B7B8C;
+      --cape-primary: #8B2020;
+      --cape-shadow: #5C1515;
+      --cape-highlight: #C03030;
+      --sword-blade: #D0D8E8;
       --sword-highlight: #FFFFFF;
-      --sword-handle: #8B4513;
-      --shield-wood: #A0522D;
-      --shield-dark: #6B3A1F;
-      --shield-metal: #6B7B8C;
+      --sword-handle: #5A3A1A;
+      --sword-guard: #C9A227;
+      --belt: #5A4A3A;
+      --belt-buckle: #C9A227;
+      --boot: #5A4A3A;
     }
   </style>
 
-  <!-- Shadow/Ground -->
-  <ellipse cx="32" cy="60" rx="12" ry="3" fill="rgba(0,0,0,0.2)"/>
+  <!-- Ground shadow (stays in place) -->
+  <ellipse cx="48" cy="90" rx="22" ry="5" fill="rgba(0,0,0,0.3)"/>
 
-  <!-- BODY LAYER - shifted up 1px for breathing -->
+  <!-- CAPE LAYER (behind body) - shifted up 1px -->
+  <g id="cape" transform="translate(0, -1)">
+    <path d="M38,38 Q32,50 28,68 Q30,72 38,70 Q42,55 44,42 Z" fill="var(--cape-primary)"/>
+    <path d="M38,38 Q34,48 30,65 Q32,68 36,67 Q40,52 42,42 Z" fill="var(--cape-shadow)"/>
+  </g>
+
+  <!-- BODY LAYER - shifted up 1px -->
   <g id="body" transform="translate(0, -1)">
-    <!-- Legs -->
-    <rect x="24" y="48" width="6" height="10" fill="var(--armor-secondary)"/>
-    <rect x="34" y="48" width="6" height="10" fill="var(--armor-secondary)"/>
+    <!-- Back leg -->
+    <path d="M40,62 L38,76 L36,78 L42,78 L43,76 L42,62 Z" fill="var(--armor-secondary)"/>
+    <!-- Front leg (lunging) -->
+    <path d="M50,60 L56,74 L54,78 L60,78 L58,74 L52,58 Z" fill="var(--armor-primary)"/>
     <!-- Boots -->
-    <rect x="23" y="54" width="8" height="5" rx="1" fill="var(--armor-primary)"/>
-    <rect x="33" y="54" width="8" height="5" rx="1" fill="var(--armor-primary)"/>
-  </g>
+    <path d="M36,78 L35,82 L43,82 L42,78 Z" fill="var(--boot)" rx="1"/>
+    <path d="M54,78 L53,82 L61,82 L60,78 Z" fill="var(--boot)" rx="1"/>
 
-  <!-- ARMOR LAYER - shifted up 1px -->
-  <g id="armor" transform="translate(0, -1)">
-    <!-- Torso -->
-    <rect x="22" y="32" width="20" height="18" rx="2" fill="var(--armor-primary)"/>
-    <!-- Chest plate detail -->
-    <rect x="24" y="34" width="16" height="8" rx="1" fill="var(--armor-secondary)"/>
-    <rect x="26" y="36" width="12" height="4" fill="var(--armor-highlight)"/>
+    <!-- Torso (twisted for swing) -->
+    <path d="M38,38 C38,36 56,36 56,38 L56,62 C56,64 38,64 38,62 Z" fill="var(--armor-primary)"/>
+    <!-- Armor shadow -->
+    <path d="M40,40 L40,58 L48,60 L48,40 Z" fill="var(--armor-secondary)" opacity="0.5"/>
+    <!-- Chest plate highlight -->
+    <path d="M44,42 L52,42 L52,52 L44,52 Z" fill="var(--armor-highlight)" opacity="0.3"/>
     <!-- Belt -->
-    <rect x="22" y="46" width="20" height="4" fill="var(--armor-secondary)"/>
-    <rect x="30" y="46" width="4" height="4" fill="#C9A227"/>
-    <!-- Shoulders -->
-    <rect x="16" y="32" width="8" height="6" rx="1" fill="var(--armor-primary)"/>
-    <rect x="40" y="32" width="8" height="6" rx="1" fill="var(--armor-primary)"/>
-    <!-- Shoulder highlights -->
-    <rect x="17" y="33" width="6" height="2" fill="var(--armor-highlight)"/>
-    <rect x="41" y="33" width="6" height="2" fill="var(--armor-highlight)"/>
+    <rect x="38" y="58" width="18" height="3" rx="1" fill="var(--belt)"/>
+    <rect x="46" y="57" width="4" height="5" rx="1" fill="var(--belt-buckle)"/>
+    <!-- Chest emblem -->
+    <path d="M47,46 L44,50 L47,53 L50,50 Z" fill="var(--belt-buckle)" opacity="0.7"/>
   </g>
 
-  <!-- ARMS - shifted up 1px -->
+  <!-- ARMS LAYER - shifted up 1px -->
   <g id="arms" transform="translate(0, -1)">
-    <!-- Left arm (shield arm) -->
-    <rect x="14" y="36" width="6" height="14" fill="var(--armor-secondary)"/>
-    <!-- Right arm (sword arm) -->
-    <rect x="44" y="36" width="6" height="14" fill="var(--armor-secondary)"/>
-    <!-- Gloves -->
-    <rect x="13" y="48" width="6" height="4" rx="1" fill="var(--armor-primary)"/>
-    <rect x="45" y="48" width="6" height="4" rx="1" fill="var(--armor-primary)"/>
+    <!-- Left arm (back, raised) -->
+    <path d="M38,40 L32,34 L30,26 L34,25 L36,32 L40,38 Z" fill="var(--armor-primary)"/>
+    <path d="M30,26 L34,25 L33,22 L29,23 Z" fill="var(--skin)"/>
+    <!-- Right arm (front, raised) -->
+    <path d="M54,38 L58,32 L60,24 L56,23 L55,30 L52,36 Z" fill="var(--armor-primary)"/>
+    <path d="M60,24 L56,23 L57,20 L61,21 Z" fill="var(--skin)"/>
+    <!-- Pauldrons -->
+    <ellipse cx="38" cy="39" rx="5" ry="3" fill="var(--armor-secondary)"/>
+    <ellipse cx="38" cy="39" rx="5" ry="3" fill="var(--armor-highlight)" opacity="0.2"/>
+    <ellipse cx="55" cy="37" rx="5" ry="3" fill="var(--armor-secondary)"/>
+    <ellipse cx="55" cy="37" rx="5" ry="3" fill="var(--armor-highlight)" opacity="0.15"/>
   </g>
 
-  <!-- HELMET LAYER - shifted up 1px -->
-  <g id="helmet" transform="translate(0, -1)">
-    <!-- Helmet base -->
-    <rect x="22" y="12" width="20" height="20" rx="3" fill="var(--helmet)"/>
-    <!-- Helmet top -->
-    <rect x="24" y="8" width="16" height="6" rx="2" fill="var(--helmet)"/>
-    <!-- Helmet highlight -->
-    <rect x="25" y="10" width="8" height="3" fill="var(--helmet-highlight)"/>
-    <!-- Visor opening -->
-    <rect x="24" y="20" width="16" height="6" rx="1" fill="#1a1a1a"/>
-    <!-- Eyes visible through visor -->
-    <rect x="26" y="22" width="4" height="3" fill="var(--skin)"/>
-    <rect x="34" y="22" width="4" height="3" fill="var(--skin)"/>
-    <!-- Eye dots -->
-    <rect x="27" y="23" width="2" height="2" fill="#2D2D2D"/>
-    <rect x="35" y="23" width="2" height="2" fill="#2D2D2D"/>
-    <!-- Visor slits -->
-    <rect x="25" y="21" width="14" height="1" fill="var(--helmet-highlight)"/>
-  </g>
-
-  <!-- SHIELD LAYER - shifted up 1px -->
-  <g id="shield" transform="translate(0, -1)">
-    <!-- Shield body -->
-    <path d="M6 36 L6 52 L14 58 L22 52 L22 36 Z" fill="var(--shield-wood)"/>
-    <!-- Shield border -->
-    <path d="M6 36 L6 52 L14 58 L22 52 L22 36 Z" fill="none" stroke="var(--shield-metal)" stroke-width="2"/>
-    <!-- Shield cross -->
-    <rect x="12" y="38" width="4" height="16" fill="var(--shield-dark)"/>
-    <rect x="8" y="44" width="12" height="4" fill="var(--shield-dark)"/>
-    <!-- Shield highlight -->
-    <rect x="8" y="38" width="3" height="8" fill="#B8734D"/>
-  </g>
-
-  <!-- WEAPON LAYER - shifted up 2px (sword raised slightly) -->
+  <!-- WEAPON LAYER - shifted up 2px -->
   <g id="weapon" transform="translate(0, -2)">
-    <!-- Sword blade -->
-    <rect x="50" y="8" width="4" height="40" fill="var(--sword-blade)"/>
+    <!-- Sword handle -->
+    <rect x="43" y="14" width="3" height="10" rx="1" fill="var(--sword-handle)" transform="rotate(-10, 44, 19)"/>
+    <!-- Crossguard -->
+    <rect x="39" y="12" width="11" height="3" rx="1" fill="var(--sword-guard)" transform="rotate(-10, 44, 13)"/>
+    <!-- Blade -->
+    <path d="M43,12 L45.5,0 L48,12 Z" fill="var(--sword-blade)" transform="rotate(-10, 45, 6)"/>
     <!-- Blade edge highlight -->
-    <rect x="50" y="8" width="1" height="38" fill="var(--sword-highlight)"/>
-    <!-- Blade tip -->
-    <polygon points="50,8 54,8 52,4" fill="var(--sword-blade)"/>
-    <!-- Cross guard -->
-    <rect x="46" y="46" width="12" height="4" rx="1" fill="var(--sword-handle)"/>
-    <!-- Handle -->
-    <rect x="50" y="50" width="4" height="8" fill="var(--sword-handle)"/>
+    <path d="M44.5,12 L45.5,1 L46.5,12 Z" fill="var(--sword-highlight)" opacity="0.5" transform="rotate(-10, 45, 6)"/>
     <!-- Pommel -->
-    <circle cx="52" cy="60" r="3" fill="#C9A227"/>
+    <circle cx="44.5" cy="24" r="2" fill="var(--sword-guard)" transform="rotate(-10, 44, 24)"/>
+  </g>
+
+  <!-- HEAD LAYER - shifted up 1px -->
+  <g id="head" transform="translate(0, -1)">
+    <!-- Helmet -->
+    <path d="M38,28 Q38,18 48,17 Q58,18 58,28 L58,34 Q58,37 48,38 Q38,37 38,34 Z" fill="var(--armor-secondary)"/>
+    <!-- Helmet crest -->
+    <path d="M46,17 Q48,12 50,17" fill="none" stroke="var(--cape-primary)" stroke-width="3" stroke-linecap="round"/>
+    <!-- Cheek guards -->
+    <rect x="38" y="30" width="4" height="6" rx="1" fill="var(--armor-secondary)"/>
+    <rect x="54" y="30" width="4" height="6" rx="1" fill="var(--armor-secondary)"/>
+
+    <!-- Face -->
+    <ellipse cx="48" cy="30" rx="8" ry="7" fill="var(--skin)"/>
+    <ellipse cx="48" cy="27" rx="7" ry="3" fill="var(--skin-shadow)" opacity="0.3"/>
+
+    <!-- Eyes (fierce) -->
+    <!-- Left eye -->
+    <ellipse cx="44" cy="30" rx="3" ry="2.5" fill="#fff"/>
+    <ellipse cx="44.5" cy="30" rx="2" ry="2" fill="var(--eye-color)"/>
+    <circle cx="45" cy="30" r="1.2" fill="#2a2a3a"/>
+    <circle cx="45.5" cy="29.2" r="0.7" fill="#fff"/>
+    <circle cx="44" cy="30.5" r="0.4" fill="#fff"/>
+    <!-- Right eye -->
+    <ellipse cx="52" cy="30" rx="3" ry="2.5" fill="#fff"/>
+    <ellipse cx="52.5" cy="30" rx="2" ry="2" fill="var(--eye-color)"/>
+    <circle cx="53" cy="30" r="1.2" fill="#2a2a3a"/>
+    <circle cx="53.5" cy="29.2" r="0.7" fill="#fff"/>
+    <circle cx="52" cy="30.5" r="0.4" fill="#fff"/>
+
+    <!-- Eyebrows (fierce/angry) -->
+    <line x1="41" y1="27" x2="46" y2="26" stroke="var(--hair)" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="55" y1="27" x2="50" y2="26" stroke="var(--hair)" stroke-width="1.2" stroke-linecap="round"/>
+
+    <!-- Nose -->
+    <line x1="48" y1="31" x2="48" y2="33" stroke="var(--skin-shadow)" stroke-width="0.8" stroke-linecap="round"/>
+
+    <!-- Mouth (battle cry) -->
+    <ellipse cx="48" cy="35" rx="3" ry="2" fill="#8B3030"/>
+    <path d="M45.5,34.5 Q48,33.5 50.5,34.5" fill="none" stroke="#fff" stroke-width="0.5"/>
+  </g>
+
+  <!-- Motion lines - shifted up 1px -->
+  <g transform="translate(0, -1)">
+    <path d="M28,10 Q30,16 26,20" fill="none" stroke="var(--armor-highlight)" stroke-width="0.8" opacity="0.4"/>
+    <path d="M62,8 Q60,14 64,18" fill="none" stroke="var(--armor-highlight)" stroke-width="0.8" opacity="0.3"/>
+    <path d="M34,14 Q36,18 33,22" fill="none" stroke="var(--armor-highlight)" stroke-width="0.6" opacity="0.3"/>
   </g>
 </svg>

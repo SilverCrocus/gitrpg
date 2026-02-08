@@ -1,5 +1,5 @@
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { SupabaseClientService } from './supabaseClient';
+import { SupabaseClientService, DbUser, dbUserToBattleFighter } from './supabaseClient';
 import { BOSS_DEFINITIONS, createBossInstance, BOSS_REWARDS } from './bossService';
 import type { BossInstance, BattleFighter, CharacterClass } from '../types';
 
@@ -91,6 +91,21 @@ export class CoopBattleService {
     const canFight = await this.canFightBoss();
     if (!canFight) {
       return { success: false, error: 'Already won boss battle today' };
+    }
+
+    // Check if friend can fight boss today
+    const { data: friendData } = await client
+      .from('users')
+      .select('last_boss_win_date')
+      .eq('id', friendId)
+      .single();
+
+    if (friendData?.last_boss_win_date) {
+      const friendLastWin = new Date(friendData.last_boss_win_date);
+      const today = new Date();
+      if (friendLastWin.toDateString() === today.toDateString()) {
+        return { success: false, error: 'Friend has already won boss battle today' };
+      }
     }
 
     const bossType = await this.getDailyBoss();
@@ -232,42 +247,33 @@ export class CoopBattleService {
       return { success: false, error: 'Battle not found' };
     }
 
+    // Validate lobby membership
+    const lobbyCheck = await this.joinLobby(lobbyId);
+    if (!lobbyCheck.success) {
+      return { success: false, error: lobbyCheck.error };
+    }
+
+    // Only the host (player1) runs the simulation
+    const isHost = user.id === battle.player1_id;
+
+    if (!isHost) {
+      // Player 2 polls for completion
+      return this.pollForBattleCompletion(lobbyId);
+    }
+
     // Create boss instance
     const boss = createBossInstance(battle.boss_type, Math.max(battle.player1.level, battle.player2?.level || 1));
-    boss.currentHp = battle.boss_max_hp;
+    boss.currentHp = battle.boss_current_hp;
 
-    // Create player fighters
-    const player1: BattleFighter = {
-      id: battle.player1.id,
-      name: battle.player1.display_name,
-      class: battle.player1.character_class as CharacterClass,
-      level: battle.player1.level,
-      stats: {
-        maxHp: battle.player1.stats_max_hp,
-        attack: battle.player1.stats_attack,
-        defense: battle.player1.stats_defense,
-        speed: battle.player1.stats_speed,
-        critChance: battle.player1.stats_crit,
-        critDamage: 1.5,
-      },
-      currentHp: battle.player1_current_hp,
-    };
+    // Create player fighters using shared helper
+    const player1User = battle.player1 as unknown as DbUser;
+    const player1 = dbUserToBattleFighter(player1User, battle.player1_current_hp) as BattleFighter;
 
-    const player2: BattleFighter | null = battle.player2 ? {
-      id: battle.player2.id,
-      name: battle.player2.display_name,
-      class: battle.player2.character_class as CharacterClass,
-      level: battle.player2.level,
-      stats: {
-        maxHp: battle.player2.stats_max_hp,
-        attack: battle.player2.stats_attack,
-        defense: battle.player2.stats_defense,
-        speed: battle.player2.stats_speed,
-        critChance: battle.player2.stats_crit,
-        critDamage: 1.5,
-      },
-      currentHp: battle.player2_current_hp,
-    } : null;
+    let player2: BattleFighter | null = null;
+    if (battle.player2) {
+      const player2User = battle.player2 as unknown as DbUser;
+      player2 = dbUserToBattleFighter(player2User, battle.player2_current_hp) as BattleFighter;
+    }
 
     // Start battle
     await this.startBattle(lobbyId);
@@ -287,14 +293,20 @@ export class CoopBattleService {
         const winnerIds = [player1.id];
         if (player2) winnerIds.push(player2.id);
         const rewards = await this.completeBattle(lobbyId, true, winnerIds, !!player2);
-        await this.updateBattleState(lobbyId, boss.currentHp, player1.currentHp, player2?.currentHp || null, allLogEntries);
+        const playerIds = [player1.id];
+        if (player2) playerIds.push(player2.id);
+        await this.applyRewardsToPlayers(playerIds, rewards);
+        await this.updateBattleState(lobbyId, boss.currentHp, player1.currentHp, player2?.currentHp ?? null, allLogEntries);
         return { success: true, won: true, battleLog: allLogEntries, rewards };
       }
 
       if (player1.currentHp <= 0 && (!player2 || player2.currentHp <= 0)) {
         // Boss won
         const rewards = await this.completeBattle(lobbyId, false, [], !!player2);
-        await this.updateBattleState(lobbyId, boss.currentHp, player1.currentHp, player2?.currentHp || null, allLogEntries);
+        const playerIds = [player1.id];
+        if (player2) playerIds.push(player2.id);
+        await this.applyRewardsToPlayers(playerIds, rewards);
+        await this.updateBattleState(lobbyId, boss.currentHp, player1.currentHp, player2?.currentHp ?? null, allLogEntries);
         return { success: true, won: false, battleLog: allLogEntries, rewards };
       }
 
@@ -303,6 +315,9 @@ export class CoopBattleService {
 
     // Timeout - boss wins by default
     const rewards = await this.completeBattle(lobbyId, false, [], !!player2);
+    const playerIds = [player1.id];
+    if (player2) playerIds.push(player2.id);
+    await this.applyRewardsToPlayers(playerIds, rewards);
     return { success: true, won: false, battleLog: allLogEntries, rewards };
   }
 
@@ -352,7 +367,7 @@ export class CoopBattleService {
     // Player 1 attacks boss
     const p1Damage = this.calculateDamage(player1.stats.attack, boss.defense);
     const p1Crit = Math.random() < player1.stats.critChance;
-    const p1FinalDamage = p1Crit ? Math.floor(p1Damage * 1.5) : p1Damage;
+    const p1FinalDamage = p1Crit ? Math.floor(p1Damage * player1.stats.critDamage) : p1Damage;
     boss.currentHp = Math.max(0, boss.currentHp - p1FinalDamage);
 
     entries.push({
@@ -370,7 +385,7 @@ export class CoopBattleService {
     if (player2 && player2.currentHp > 0) {
       const p2Damage = this.calculateDamage(player2.stats.attack, boss.defense);
       const p2Crit = Math.random() < player2.stats.critChance;
-      const p2FinalDamage = p2Crit ? Math.floor(p2Damage * 1.5) : p2Damage;
+      const p2FinalDamage = p2Crit ? Math.floor(p2Damage * player2.stats.critDamage) : p2Damage;
       boss.currentHp = Math.max(0, boss.currentHp - p2FinalDamage);
 
       entries.push({
@@ -387,14 +402,26 @@ export class CoopBattleService {
 
     // Boss attacks (if alive)
     if (boss.currentHp > 0) {
-      // 70% chance to target lowest HP player, 30% random
-      let target: 'player1' | 'player2' = 'player1';
-      if (player2 && player2.currentHp > 0) {
+      const p1Alive = player1.currentHp > 0;
+      const p2Alive = player2 !== null && player2.currentHp > 0;
+
+      // Skip if no alive targets
+      if (!p1Alive && !p2Alive) {
+        return entries;
+      }
+
+      let target: 'player1' | 'player2';
+      if (p1Alive && p2Alive) {
+        // Both alive: 70% chance to target lowest HP player, 30% random
         if (Math.random() < 0.7) {
-          target = player1.currentHp <= player2.currentHp ? 'player1' : 'player2';
+          target = player1.currentHp <= player2!.currentHp ? 'player1' : 'player2';
         } else {
           target = Math.random() < 0.5 ? 'player1' : 'player2';
         }
+      } else if (p1Alive) {
+        target = 'player1';
+      } else {
+        target = 'player2';
       }
 
       const targetFighter = target === 'player1' ? player1 : player2!;
@@ -547,7 +574,7 @@ export class CoopBattleService {
 
   unsubscribeFromBattle(): void {
     if (this.battleSubscription) {
-      this.battleSubscription.unsubscribe();
+      this.supabase.getClient().removeChannel(this.battleSubscription);
       this.battleSubscription = null;
     }
   }
@@ -593,8 +620,62 @@ export class CoopBattleService {
 
   unsubscribeFromChallenges(): void {
     if (this.challengeSubscription) {
-      this.challengeSubscription.unsubscribe();
+      this.supabase.getClient().removeChannel(this.challengeSubscription);
       this.challengeSubscription = null;
     }
+  }
+
+  private async applyRewardsToPlayers(playerIds: string[], rewards: { xp: number; gold: number }): Promise<void> {
+    const client = this.supabase.getClient();
+    for (const id of playerIds) {
+      const { data: userData } = await client
+        .from('users')
+        .select('gold, total_xp')
+        .eq('id', id)
+        .single();
+      if (userData) {
+        await client
+          .from('users')
+          .update({
+            gold: (userData.gold || 0) + rewards.gold,
+            total_xp: (userData.total_xp || 0) + rewards.xp,
+          })
+          .eq('id', id);
+      }
+    }
+  }
+
+  private async pollForBattleCompletion(lobbyId: string): Promise<{
+    success: boolean;
+    won?: boolean;
+    battleLog?: BattleLogEntry[];
+    rewards?: { xp: number; gold: number };
+    error?: string;
+  }> {
+    const client = this.supabase.getClient();
+    const maxPolls = 30; // 60 seconds max
+
+    for (let i = 0; i < maxPolls; i++) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const { data: battle } = await client
+        .from('boss_battles')
+        .select('*')
+        .eq('id', lobbyId)
+        .single();
+
+      if (!battle) return { success: false, error: 'Battle not found' };
+
+      if (battle.status === 'completed' || battle.status === 'failed') {
+        return {
+          success: true,
+          won: battle.status === 'completed',
+          battleLog: battle.battle_log || [],
+          rewards: battle.rewards || undefined,
+        };
+      }
+    }
+
+    return { success: false, error: 'Battle timed out waiting for host' };
   }
 }

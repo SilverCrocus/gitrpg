@@ -1,10 +1,11 @@
 import { SupabaseClientService } from './supabaseClient';
+import { LocalStateManager } from './localStateManager';
 import { Quest, QuestStatus, DAILY_QUEST_TEMPLATES } from '../types';
 
 export const DAILY_QUEST_COUNT = 3;
 
 export class QuestService {
-  constructor(private supabase: SupabaseClientService) {}
+  constructor(private supabase: SupabaseClientService, private stateManager?: LocalStateManager) {}
 
   /**
    * Get all active quests for the current user
@@ -243,6 +244,12 @@ export class QuestService {
         total_xp: currentXp + quest.reward_xp,
       })
       .eq('id', user.id);
+
+    // Update local state
+    if (this.stateManager) {
+      await this.stateManager.addGold(quest.reward_gold);
+      await this.stateManager.addXp(quest.reward_xp);
+    }
 
     return { xp: quest.reward_xp, gold: quest.reward_gold };
   }

@@ -41,11 +41,17 @@ export async function activate(context: vscode.ExtensionContext) {
   friendsService = new FriendsService(supabaseClient);
   pvpBattleService = new PvpBattleService(supabaseClient);
   coopBattleService = new CoopBattleService(supabaseClient);
-  questService = new QuestService(supabaseClient);
-  workerService = new WorkerService(supabaseClient);
+  questService = new QuestService(supabaseClient, stateManager);
+  workerService = new WorkerService(supabaseClient, stateManager);
+  gitTracker.setQuestService(questService);
 
   // Register OAuth callback handler
   registerAuthHandler(context, supabaseClient, profileSync);
+
+  // Hydrate local state from cloud (reconcile gold)
+  if (supabaseClient.isAuthenticated()) {
+    await profileSync.hydrateLocalStateFromCloud();
+  }
 
   // Subscribe to notifications if authenticated
   if (supabaseClient.isAuthenticated()) {

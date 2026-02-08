@@ -1,8 +1,9 @@
 import { SupabaseClientService } from './supabaseClient';
+import { LocalStateManager } from './localStateManager';
 import { Worker, WORKER_CONFIG } from '../types';
 
 export class WorkerService {
-  constructor(private supabase: SupabaseClientService) {}
+  constructor(private supabase: SupabaseClientService, private stateManager?: LocalStateManager) {}
 
   /**
    * Calculate the cost to purchase a new worker based on current worker count
@@ -136,6 +137,11 @@ export class WorkerService {
       return { success: false, error: 'Failed to create worker' };
     }
 
+    // Update local state (deduct cost)
+    if (this.stateManager) {
+      await this.stateManager.addGold(-cost);
+    }
+
     return { success: true, worker };
   }
 
@@ -198,6 +204,11 @@ export class WorkerService {
       return { success: false, error: 'Failed to upgrade worker' };
     }
 
+    // Update local state (deduct cost)
+    if (this.stateManager) {
+      await this.stateManager.addGold(-upgradeCost);
+    }
+
     return { success: true, worker: updatedWorker };
   }
 
@@ -237,6 +248,11 @@ export class WorkerService {
       .from('users')
       .update({ gold: currentGold + totalGold })
       .eq('id', user.id);
+
+    // Update local state
+    if (this.stateManager) {
+      await this.stateManager.addGold(totalGold);
+    }
 
     return { success: true, goldCollected: totalGold };
   }

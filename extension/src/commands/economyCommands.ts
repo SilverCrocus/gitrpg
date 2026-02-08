@@ -99,7 +99,7 @@ export function registerEconomyCommands(
         vscode.window.showErrorMessage(result.error || 'Failed to purchase worker');
       }
     } else if (selected?.startsWith('⚙️ Worker')) {
-      const workerIndex = parseInt(selected.split(' ')[1]) - 1;
+      const workerIndex = parseInt(selected.split(' ')[2]) - 1;
       const worker = workers[workerIndex];
       if (worker) {
         const upgradeCost = workerService.calculateUpgradeCost(worker.level);

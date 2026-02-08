@@ -8,6 +8,8 @@ import { FriendsService } from '../../services/friendsService';
 import { PvpBattleService } from '../../services/pvpBattleService';
 import { CoopBattleService } from '../../services/coopBattleService';
 import { GitTrackingService } from '../../services/gitTrackingService';
+import { showBattlePanel, BattleData } from '../../commands/battleCommand';
+import type { CharacterClass } from '../../types';
 
 /**
  * Services required by the DashboardPanel
@@ -34,6 +36,10 @@ export class DashboardPanel {
   private readonly services: DashboardServices;
   private disposables: vscode.Disposable[] = [];
   private unsubscribeFromState: (() => void) | null = null;
+  private sendStateDebounceTimer: NodeJS.Timeout | null = null;
+  private cachedQuests: any[] = [];
+  private cachedWorkerSummary: any = { workerCount: 0, totalGoldPerHour: 0, pendingGold: 0, nextWorkerCost: 100 };
+  private cachedIsAuthenticated: boolean = false;
 
   /**
    * Creates or shows the dashboard panel
@@ -67,7 +73,7 @@ export class DashboardPanel {
       }
     );
 
-    DashboardPanel.currentPanel = new DashboardPanel(panel, context.extensionUri, services, context);
+    DashboardPanel.currentPanel = new DashboardPanel(panel, context.extensionUri, services, context, initialView);
     return DashboardPanel.currentPanel;
   }
 
@@ -78,7 +84,8 @@ export class DashboardPanel {
     panel: vscode.WebviewPanel,
     extensionUri: vscode.Uri,
     services: DashboardServices,
-    context: vscode.ExtensionContext
+    context: vscode.ExtensionContext,
+    initialView: string = 'dashboard'
   ) {
     this.panel = panel;
     this.extensionUri = extensionUri;
@@ -90,12 +97,17 @@ export class DashboardPanel {
     // Send initial state
     this.sendStateToWebview();
 
+    // Navigate to initial view after state is loaded
+    if (initialView !== 'dashboard') {
+      this.panel.webview.postMessage({ type: 'navigate', view: initialView });
+    }
+
     // Handle panel disposal
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
 
-    // Update webview when state changes
+    // Update webview when state changes (debounced to avoid excessive network requests)
     this.unsubscribeFromState = services.stateManager.onStateChange(() => {
-      this.sendStateToWebview();
+      this.debouncedSendStateToWebview();
     });
 
     // Handle messages from webview
@@ -104,6 +116,33 @@ export class DashboardPanel {
       null,
       this.disposables
     );
+  }
+
+  /**
+   * Debounced version of sendStateToWebview to avoid excessive network requests.
+   * Sends local state immediately (cheap) and debounces the full network refresh.
+   */
+  private debouncedSendStateToWebview(): void {
+    if (this.sendStateDebounceTimer) {
+      clearTimeout(this.sendStateDebounceTimer);
+    }
+
+    // Send local state immediately with cached network data (no flicker)
+    const character = this.services.stateManager.getCharacter();
+    const todayStats = this.services.stateManager.getTodayStats();
+    this.panel.webview.postMessage({
+      type: 'stateUpdate',
+      character,
+      todayStats,
+      quests: this.cachedQuests,
+      workerSummary: this.cachedWorkerSummary,
+      isAuthenticated: this.cachedIsAuthenticated,
+    });
+
+    // Debounce the full network refresh
+    this.sendStateDebounceTimer = setTimeout(() => {
+      this.sendStateToWebview();
+    }, 5000);
   }
 
   /**
@@ -122,7 +161,8 @@ export class DashboardPanel {
     let pendingPvpChallenges: any[] = [];
     let pendingBossInvites: any[] = [];
 
-    if (supabaseClient.isAuthenticated()) {
+    const isAuthenticated = supabaseClient.isAuthenticated();
+    if (isAuthenticated) {
       try {
         quests = await questService.refreshDailyQuestsIfNeeded();
         workerSummary = await workerService.getWorkerSummary();
@@ -141,6 +181,11 @@ export class DashboardPanel {
       }
     }
 
+    // Cache network data for use in debounced immediate messages
+    this.cachedQuests = quests;
+    this.cachedWorkerSummary = workerSummary;
+    this.cachedIsAuthenticated = isAuthenticated;
+
     this.panel.webview.postMessage({
       type: 'stateUpdate',
       character,
@@ -150,7 +195,7 @@ export class DashboardPanel {
       pendingFriendRequests,
       pendingPvpChallenges,
       pendingBossInvites,
-      isAuthenticated: supabaseClient.isAuthenticated()
+      isAuthenticated
     });
   }
 
@@ -291,8 +336,31 @@ export class DashboardPanel {
       case 'acceptPvp': {
         const result = await pvpBattleService.acceptChallenge(message.battleId);
         if (result) {
-          const resultText = result.winner.name === stateManager.getCharacter().name ? 'You won!' : 'You lost!';
-          vscode.window.showInformationMessage(`Battle complete! ${resultText} Winner: ${result.winner.name}`);
+          // Determine fighter order from battle actions
+          const firstActorId = result.actions[0]?.actorId;
+          const f1 = firstActorId === result.winner.id ? result.winner : result.loser;
+          const f2 = firstActorId === result.winner.id ? result.loser : result.winner;
+
+          const battleData: BattleData = {
+            fighter1: {
+              id: f1.id,
+              name: f1.name,
+              class: f1.class as CharacterClass,
+              level: f1.level,
+              maxHp: f1.stats.maxHp,
+            },
+            fighter2: {
+              id: f2.id,
+              name: f2.name,
+              class: f2.class as CharacterClass,
+              level: f2.level,
+              maxHp: f2.stats.maxHp,
+            },
+            actions: result.actions,
+            winnerId: result.winner.id,
+            rewards: result.rewards,
+          };
+          await showBattlePanel(context, battleData);
           await this.sendStateToWebview();
         }
         break;
@@ -345,6 +413,10 @@ export class DashboardPanel {
   public dispose(): void {
     if (this.unsubscribeFromState) {
       this.unsubscribeFromState();
+    }
+
+    if (this.sendStateDebounceTimer) {
+      clearTimeout(this.sendStateDebounceTimer);
     }
 
     DashboardPanel.currentPanel = undefined;

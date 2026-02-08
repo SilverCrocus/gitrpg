@@ -1,111 +1,153 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
   <style>
     :root {
       --tunic-primary: #2D5A2D;
       --tunic-secondary: #1E3D1E;
       --tunic-highlight: #3D7A3D;
-      --skin: #D4A574;
-      --skin-shadow: #B8956A;
+      --skin: #E8C4A0;
+      --skin-shadow: #D4A878;
       --hair: #8B6914;
-      --hair-highlight: #A68A3D;
-      --bow-wood: #6B4423;
-      --bow-highlight: #8B5A33;
-      --leather: #5C4033;
-      --leather-dark: #3D2A22;
+      --hair-highlight: #A07E20;
+      --hair-shadow: #7A5A10;
+      --eye-color: #5A8040;
+      --cloak-primary: #1E3D1E;
+      --cloak-shadow: #163016;
+      --leather: #5A3A1A;
+      --leather-dark: #3A2A1A;
+      --quiver: #6B4A2A;
+      --bow-wood: #6B4A2A;
+      --bow-highlight: #8B6A3A;
+      --bowstring: #C0B090;
+      --arrow-shaft: #8B7355;
+      --fletching: #C03030;
+      --belt-buckle: #C9A227;
+      --boot: #3A2A1A;
     }
   </style>
 
-  <!-- Shadow/Ground -->
-  <ellipse cx="32" cy="60" rx="12" ry="3" fill="rgba(0,0,0,0.2)"/>
+  <!-- Ground shadow -->
+  <ellipse cx="48" cy="90" rx="20" ry="4" fill="rgba(0,0,0,0.25)"/>
+
+  <!-- CLOAK LAYER (behind body) -->
+  <g id="cape">
+    <path d="M44,38 Q38,50 34,68 Q36,74 42,72 Q44,56 46,42 Z" fill="var(--cloak-primary)"/>
+    <path d="M44,38 Q40,48 36,64 Q38,68 42,66 Q44,52 46,42 Z" fill="var(--cloak-shadow)" opacity="0.7"/>
+  </g>
+
+  <!-- QUIVER LAYER (behind body) -->
+  <g id="quiver">
+    <rect x="36" y="34" width="5" height="22" rx="2" fill="var(--quiver)" transform="rotate(8, 38, 45)"/>
+    <!-- Arrow shafts -->
+    <line x1="37" y1="34" x2="36" y2="24" stroke="var(--arrow-shaft)" stroke-width="1" transform="rotate(8, 37, 29)"/>
+    <line x1="39" y1="34" x2="38" y2="22" stroke="var(--arrow-shaft)" stroke-width="1" transform="rotate(5, 39, 28)"/>
+    <line x1="41" y1="34" x2="41" y2="26" stroke="var(--arrow-shaft)" stroke-width="1" transform="rotate(3, 41, 30)"/>
+    <!-- Fletching -->
+    <path d="M35,24 L36,22 L37,24" fill="var(--fletching)" transform="rotate(8, 36, 23)"/>
+    <path d="M37,22 L38,20 L39,22" fill="var(--fletching)" transform="rotate(5, 38, 21)"/>
+    <path d="M40,26 L41,24 L42,26" fill="var(--fletching)" transform="rotate(3, 41, 25)"/>
+    <!-- Quiver strap -->
+    <line x1="38" y1="36" x2="50" y2="42" stroke="var(--leather)" stroke-width="1.5"/>
+  </g>
 
   <!-- BODY LAYER -->
   <g id="body">
-    <!-- Legs -->
-    <rect x="24" y="46" width="6" height="12" fill="var(--tunic-secondary)"/>
-    <rect x="34" y="46" width="6" height="12" fill="var(--tunic-secondary)"/>
-    <!-- Boots -->
-    <rect x="23" y="54" width="8" height="5" rx="1" fill="var(--leather)"/>
-    <rect x="33" y="54" width="8" height="5" rx="1" fill="var(--leather)"/>
-    <!-- Boot tops -->
-    <rect x="24" y="52" width="6" height="3" fill="var(--leather-dark)"/>
-    <rect x="34" y="52" width="6" height="3" fill="var(--leather-dark)"/>
-  </g>
+    <!-- Back leg -->
+    <path d="M42,62 L38,74 L36,78 L42,78 L43,74 L44,62 Z" fill="var(--leather-dark)"/>
+    <path d="M36,78 L35,82 L43,82 L42,78 Z" fill="var(--boot)"/>
+    <!-- Front leg -->
+    <path d="M52,60 L56,74 L54,78 L60,78 L58,74 L54,60 Z" fill="var(--leather-dark)"/>
+    <path d="M54,78 L53,82 L61,82 L60,78 Z" fill="var(--boot)"/>
 
-  <!-- TUNIC LAYER -->
-  <g id="tunic">
     <!-- Torso -->
-    <rect x="22" y="30" width="20" height="18" rx="2" fill="var(--tunic-primary)"/>
-    <!-- Tunic detail -->
-    <rect x="30" y="32" width="4" height="12" fill="var(--tunic-highlight)"/>
+    <path d="M40,38 C40,36 56,36 56,38 L56,62 C56,64 40,64 40,62 Z" fill="var(--tunic-primary)"/>
+    <!-- Tunic shadow -->
+    <path d="M42,40 L42,58 L48,60 L48,40 Z" fill="var(--tunic-secondary)" opacity="0.4"/>
+    <!-- Tunic highlight -->
+    <path d="M50,40 L50,58 L54,56 L54,40 Z" fill="var(--tunic-highlight)" opacity="0.25"/>
+    <!-- Leather vest overlay -->
+    <path d="M43,38 L43,52 L48,54 L53,52 L53,38 Z" fill="var(--leather)" opacity="0.6"/>
     <!-- Belt -->
-    <rect x="22" y="44" width="20" height="4" fill="var(--leather)"/>
-    <rect x="30" y="44" width="4" height="4" fill="var(--leather-dark)"/>
-    <!-- Shoulders (light padding) -->
-    <rect x="18" y="30" width="6" height="5" rx="1" fill="var(--tunic-primary)"/>
-    <rect x="40" y="30" width="6" height="5" rx="1" fill="var(--tunic-primary)"/>
-    <!-- Shoulder trim -->
-    <rect x="18" y="30" width="6" height="2" fill="var(--tunic-highlight)"/>
-    <rect x="40" y="30" width="6" height="2" fill="var(--tunic-highlight)"/>
+    <rect x="40" y="58" width="16" height="3" rx="1" fill="var(--leather)"/>
+    <rect x="47" y="57" width="4" height="5" rx="1" fill="var(--belt-buckle)"/>
   </g>
 
-  <!-- ARMS -->
+  <!-- ARMS LAYER -->
   <g id="arms">
-    <!-- Left arm (bow arm) -->
-    <rect x="16" y="34" width="5" height="12" fill="var(--tunic-secondary)"/>
-    <!-- Right arm -->
-    <rect x="43" y="34" width="5" height="12" fill="var(--tunic-secondary)"/>
-    <!-- Bracer (left) -->
-    <rect x="15" y="40" width="5" height="6" fill="var(--leather)"/>
-    <!-- Glove (right) -->
-    <rect x="44" y="44" width="5" height="4" rx="1" fill="var(--leather)"/>
-    <!-- Hands -->
-    <rect x="15" y="44" width="4" height="4" rx="1" fill="var(--skin)"/>
-    <rect x="44" y="44" width="4" height="4" rx="1" fill="var(--skin)"/>
+    <!-- Left arm (drawing bowstring back) -->
+    <path d="M42,40 L36,44 L28,46 L26,42 L34,40 L42,38 Z" fill="var(--tunic-primary)"/>
+    <rect x="28" y="40" width="7" height="4" rx="1" fill="var(--leather)" transform="rotate(-5, 31, 42)"/>
+    <path d="M26,42 L24,44 L25,46 L28,44 Z" fill="var(--skin)"/>
+    <!-- Right arm (holding bow, extended) -->
+    <path d="M56,38 L64,36 L72,34 L74,38 L66,38 L56,40 Z" fill="var(--tunic-primary)"/>
+    <rect x="62" y="34" width="7" height="4" rx="1" fill="var(--leather)" transform="rotate(5, 65, 36)"/>
+    <path d="M72,34 L74,38 L76,36 L74,32 Z" fill="var(--skin)"/>
+  </g>
+
+  <!-- BOW LAYER -->
+  <g id="weapon">
+    <!-- Bow limb -->
+    <path d="M78,18 Q82,34 78,50" fill="none" stroke="var(--bow-wood)" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M78,18 Q81,34 78,50" fill="none" stroke="var(--bow-highlight)" stroke-width="1" stroke-linecap="round"/>
+    <!-- Bow tips -->
+    <circle cx="78" cy="18" r="1.5" fill="var(--leather)"/>
+    <circle cx="78" cy="50" r="1.5" fill="var(--leather)"/>
+    <!-- Bowstring (drawn back) -->
+    <line x1="78" y1="18" x2="26" y2="43" stroke="var(--bowstring)" stroke-width="0.6"/>
+    <line x1="78" y1="50" x2="26" y2="43" stroke="var(--bowstring)" stroke-width="0.6"/>
+    <!-- Bow grip -->
+    <rect x="76" y="32" width="4" height="6" rx="1" fill="var(--leather-dark)"/>
+    <!-- Arrow (nocked and drawn) -->
+    <line x1="26" y1="43" x2="82" y2="34" stroke="var(--arrow-shaft)" stroke-width="1.2"/>
+    <!-- Arrowhead -->
+    <polygon points="82,34 86,32 86,36" fill="#888"/>
+    <!-- Fletching on arrow -->
+    <path d="M28,43 L26,41 L30,42.5" fill="var(--fletching)"/>
+    <path d="M28,43 L26,45 L30,43.5" fill="var(--fletching)"/>
   </g>
 
   <!-- HEAD LAYER -->
   <g id="head">
-    <!-- Hair back -->
-    <ellipse cx="32" cy="16" rx="10" ry="8" fill="var(--hair)"/>
+    <!-- Hair -->
+    <path d="M38,28 Q38,16 48,14 Q58,16 58,28 L58,32 L38,32 Z" fill="var(--hair)"/>
+    <path d="M42,18 Q48,15 54,18" fill="none" stroke="var(--hair-highlight)" stroke-width="1.5"/>
+    <!-- Hair flowing back -->
+    <path d="M56,22 Q62,20 66,22" fill="none" stroke="var(--hair)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M56,26 Q60,25 64,28" fill="none" stroke="var(--hair-shadow)" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Bangs -->
+    <path d="M40,24 Q42,20 44,24 Q46,20 48,24 Q50,20 52,24" fill="var(--hair)"/>
+
     <!-- Face -->
-    <ellipse cx="32" cy="20" rx="8" ry="7" fill="var(--skin)"/>
-    <!-- Hair front/bangs -->
-    <path d="M24 14 Q28 12 32 12 Q36 12 40 14 L40 16 Q36 18 32 18 Q28 18 24 16 Z" fill="var(--hair)"/>
-    <!-- Hair highlight -->
-    <path d="M26 14 Q30 13 34 14" fill="none" stroke="var(--hair-highlight)" stroke-width="2"/>
-    <!-- Eyes -->
-    <rect x="27" y="18" width="3" height="3" rx="1" fill="#2D2D2D"/>
-    <rect x="34" y="18" width="3" height="3" rx="1" fill="#2D2D2D"/>
-    <!-- Eye shine -->
-    <rect x="28" y="18" width="1" height="1" fill="#FFFFFF"/>
-    <rect x="35" y="18" width="1" height="1" fill="#FFFFFF"/>
+    <ellipse cx="48" cy="28" rx="9" ry="9" fill="var(--skin)"/>
+    <ellipse cx="48" cy="32" rx="7" ry="4" fill="var(--skin-shadow)" opacity="0.2"/>
+
+    <!-- Eyes (calm/focused, one squinted for aiming) -->
+    <!-- Left eye (squinted) -->
+    <ellipse cx="44" cy="28" rx="3" ry="1.8" fill="#fff"/>
+    <ellipse cx="44.5" cy="28" rx="2" ry="1.6" fill="var(--eye-color)"/>
+    <circle cx="45" cy="28" r="1" fill="#2a3a1a"/>
+    <circle cx="45.3" cy="27.3" r="0.6" fill="#fff"/>
+    <!-- Right eye (wider) -->
+    <ellipse cx="52" cy="27.5" rx="3.2" ry="2.8" fill="#fff"/>
+    <ellipse cx="52.5" cy="27.7" rx="2.2" ry="2.2" fill="var(--eye-color)"/>
+    <circle cx="53" cy="27.7" r="1.3" fill="#2a3a1a"/>
+    <circle cx="53.5" cy="26.8" r="0.8" fill="#fff"/>
+    <circle cx="52" cy="28.5" r="0.3" fill="#fff"/>
+
+    <!-- Eyebrows -->
+    <line x1="41" y1="25.5" x2="46" y2="25.5" stroke="var(--hair-shadow)" stroke-width="1" stroke-linecap="round"/>
+    <path d="M50,24.5 Q52,24 55,25" fill="none" stroke="var(--hair-shadow)" stroke-width="1" stroke-linecap="round"/>
+
     <!-- Nose -->
-    <rect x="31" y="21" width="2" height="2" fill="var(--skin-shadow)"/>
-    <!-- Slight smile -->
-    <rect x="29" y="24" width="6" height="1" rx="1" fill="var(--skin-shadow)"/>
-  </g>
+    <line x1="48" y1="29" x2="47.5" y2="31" stroke="var(--skin-shadow)" stroke-width="0.7" stroke-linecap="round"/>
 
-  <!-- QUIVER -->
-  <g id="quiver">
-    <rect x="44" y="26" width="6" height="16" rx="1" fill="var(--leather)"/>
-    <!-- Arrow feathers sticking out -->
-    <rect x="45" y="22" width="1" height="6" fill="#E8E8E8"/>
-    <rect x="47" y="23" width="1" height="5" fill="#E8E8E8"/>
-    <rect x="49" y="24" width="1" height="4" fill="#E8E8E8"/>
-    <!-- Quiver strap -->
-    <rect x="42" y="30" width="10" height="2" fill="var(--leather-dark)" transform="rotate(-30 47 31)"/>
-  </g>
+    <!-- Mouth (calm, slight smile) -->
+    <path d="M46,33 Q48,34 50,33" fill="none" stroke="#C0947A" stroke-width="0.7" stroke-linecap="round"/>
 
-  <!-- BOW -->
-  <g id="bow">
-    <!-- Bow limbs -->
-    <path d="M6 20 Q2 32 6 44" fill="none" stroke="var(--bow-wood)" stroke-width="3"/>
-    <!-- Bow string -->
-    <line x1="6" y1="20" x2="6" y2="44" stroke="#DDD" stroke-width="1"/>
-    <!-- Bow grip -->
-    <rect x="4" y="30" width="4" height="6" rx="1" fill="var(--bow-highlight)"/>
-    <!-- Bow tips -->
-    <circle cx="6" cy="20" r="2" fill="var(--bow-wood)"/>
-    <circle cx="6" cy="44" r="2" fill="var(--bow-wood)"/>
+    <!-- Ear -->
+    <ellipse cx="39" cy="28.5" rx="1.5" ry="2.5" fill="var(--skin-shadow)"/>
+
+    <!-- Green shoulder trim -->
+    <rect x="38" y="36" width="4" height="2" rx="0.5" fill="var(--tunic-highlight)"/>
+    <rect x="54" y="36" width="4" height="2" rx="0.5" fill="var(--tunic-highlight)"/>
   </g>
 </svg>

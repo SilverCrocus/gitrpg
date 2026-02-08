@@ -1,107 +1,134 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
   <style>
     :root {
       --leather-primary: #3D3D3D;
       --leather-secondary: #2A2A2A;
       --leather-highlight: #4D4D4D;
-      --skin: #D4A574;
-      --skin-shadow: #B8956A;
+      --leather-dark: #1A1A1A;
+      --skin: #E0C8A8;
+      --skin-shadow: #CDB090;
+      --hair: #222222;
       --hood: #1A1A1A;
-      --hood-highlight: #333333;
-      --dagger-blade: #C0C0C0;
-      --dagger-highlight: #E8E8E8;
-      --dagger-handle: #4A3728;
+      --hood-highlight: #2A2A2A;
+      --eye-color: #4A6040;
+      --scarf-primary: #8B2020;
+      --scarf-shadow: #5C1515;
+      --strap: #5A4A3A;
+      --belt: #4A3A2A;
+      --pouch: #5A4A3A;
+      --dagger-blade: #D0D8E8;
+      --dagger-highlight: #FFFFFF;
+      --dagger-guard: #666666;
+      --dagger-handle: #4A3020;
+      --boot: #1A1A1A;
+      --bracer: #4A3A2A;
     }
   </style>
 
-  <!-- Shadow/Ground -->
-  <ellipse cx="32" cy="60" rx="12" ry="3" fill="rgba(0,0,0,0.2)"/>
+  <!-- Ground shadow (offset - mid-leap) -->
+  <ellipse cx="52" cy="90" rx="14" ry="3" fill="rgba(0,0,0,0.15)"/>
+
+  <!-- SCARF LAYER (behind body) -->
+  <g id="cape">
+    <path d="M42,34 Q36,38 30,48 Q28,52 32,50 Q36,44 40,38 Z" fill="var(--scarf-primary)"/>
+    <path d="M40,36 Q34,42 28,54 Q26,58 30,54 Q34,46 38,40 Z" fill="var(--scarf-shadow)"/>
+  </g>
 
   <!-- BODY LAYER -->
   <g id="body">
-    <!-- Legs -->
-    <rect x="24" y="46" width="6" height="12" fill="var(--leather-secondary)"/>
-    <rect x="34" y="46" width="6" height="12" fill="var(--leather-secondary)"/>
-    <!-- Boots -->
-    <rect x="23" y="54" width="8" height="5" rx="1" fill="var(--leather-primary)"/>
-    <rect x="33" y="54" width="8" height="5" rx="1" fill="var(--leather-primary)"/>
-    <!-- Boot straps -->
-    <rect x="24" y="52" width="6" height="1" fill="var(--leather-highlight)"/>
-    <rect x="34" y="52" width="6" height="1" fill="var(--leather-highlight)"/>
-  </g>
+    <!-- Back leg (tucked) -->
+    <path d="M42,60 Q40,66 38,68 L36,72 L40,72 L42,68 Q44,64 44,60 Z" fill="var(--leather-secondary)"/>
+    <path d="M36,72 L34,76 L40,76 L40,72 Z" fill="var(--boot)"/>
+    <!-- Front leg (extended) -->
+    <path d="M50,58 L58,64 L62,68 L60,72 L56,68 L48,60 Z" fill="var(--leather-primary)"/>
+    <path d="M60,68 L62,72 L58,74 L56,70 Z" fill="var(--boot)"/>
 
-  <!-- ARMOR LAYER -->
-  <g id="armor">
-    <!-- Torso (light leather) -->
-    <rect x="22" y="30" width="20" height="18" rx="2" fill="var(--leather-primary)"/>
-    <!-- Chest straps -->
-    <rect x="24" y="32" width="3" height="14" fill="var(--leather-secondary)" transform="rotate(-15 25.5 39)"/>
-    <rect x="37" y="32" width="3" height="14" fill="var(--leather-secondary)" transform="rotate(15 38.5 39)"/>
+    <!-- Torso (twisted) -->
+    <path d="M40,38 C40,36 56,36 56,38 L54,60 C54,62 42,62 42,60 Z" fill="var(--leather-primary)"/>
+    <!-- Leather texture lines -->
+    <line x1="44" y1="42" x2="44" y2="56" stroke="var(--leather-secondary)" stroke-width="0.5" opacity="0.5"/>
+    <line x1="52" y1="42" x2="52" y2="56" stroke="var(--leather-secondary)" stroke-width="0.5" opacity="0.5"/>
+    <!-- X chest straps -->
+    <line x1="42" y1="40" x2="54" y2="56" stroke="var(--strap)" stroke-width="1.5"/>
+    <line x1="54" y1="40" x2="42" y2="56" stroke="var(--strap)" stroke-width="1.5"/>
     <!-- Belt with pouches -->
-    <rect x="22" y="44" width="20" height="4" fill="var(--leather-secondary)"/>
-    <rect x="24" y="44" width="4" height="4" fill="var(--leather-highlight)"/>
-    <rect x="36" y="44" width="4" height="4" fill="var(--leather-highlight)"/>
-    <!-- Shoulders (small) -->
-    <rect x="18" y="30" width="6" height="5" rx="1" fill="var(--leather-primary)"/>
-    <rect x="40" y="30" width="6" height="5" rx="1" fill="var(--leather-primary)"/>
+    <rect x="40" y="54" width="16" height="3" rx="1" fill="var(--belt)"/>
+    <rect x="41" y="53" width="4" height="5" rx="1" fill="var(--pouch)"/>
+    <rect x="51" y="53" width="4" height="5" rx="1" fill="var(--pouch)"/>
+    <circle cx="48" cy="55.5" r="1.5" fill="var(--dagger-guard)"/>
   </g>
 
-  <!-- ARMS -->
+  <!-- ARMS LAYER -->
   <g id="arms">
-    <!-- Left arm -->
-    <rect x="16" y="34" width="5" height="12" fill="var(--leather-secondary)"/>
-    <!-- Right arm -->
-    <rect x="43" y="34" width="5" height="12" fill="var(--leather-secondary)"/>
-    <!-- Gloves/wraps -->
-    <rect x="15" y="44" width="5" height="4" rx="1" fill="var(--leather-primary)"/>
-    <rect x="44" y="44" width="5" height="4" rx="1" fill="var(--leather-primary)"/>
+    <!-- Left arm (slashing across) -->
+    <path d="M42,40 L34,38 L26,34 L24,30 L28,30 L34,34 L42,38 Z" fill="var(--leather-primary)"/>
+    <path d="M24,30 L28,30 L27,28 L23,28 Z" fill="var(--skin)"/>
+    <rect x="30" y="33" width="6" height="3" rx="1" fill="var(--bracer)" transform="rotate(-10, 33, 34)"/>
+    <!-- Right arm (following through) -->
+    <path d="M56,38 L64,34 L72,30 L74,34 L66,36 L58,40 Z" fill="var(--leather-primary)"/>
+    <path d="M72,30 L74,34 L76,32 L74,28 Z" fill="var(--skin)"/>
+    <rect x="62" y="32" width="6" height="3" rx="1" fill="var(--bracer)" transform="rotate(10, 65, 33)"/>
   </g>
 
-  <!-- HOOD/HEAD LAYER -->
-  <g id="hood">
-    <!-- Hood (deep) -->
-    <path d="M20 12 Q20 6 32 6 Q44 6 44 12 L44 28 L20 28 Z" fill="var(--hood)"/>
-    <!-- Hood edge -->
-    <path d="M22 14 Q22 10 32 10 Q38 10 38 14" fill="none" stroke="var(--hood-highlight)" stroke-width="2"/>
-    <!-- Face (mostly shadowed) -->
-    <ellipse cx="32" cy="22" rx="7" ry="6" fill="var(--skin-shadow)"/>
-    <!-- Lower face visible -->
-    <rect x="27" y="24" width="10" height="4" rx="1" fill="var(--skin)"/>
-    <!-- Eyes (glinting from shadow) -->
-    <rect x="27" y="19" width="3" height="2" fill="#1A1A1A"/>
-    <rect x="34" y="19" width="3" height="2" fill="#1A1A1A"/>
-    <!-- Eye glint -->
-    <rect x="28" y="19" width="1" height="1" fill="#FFFFFF"/>
-    <rect x="35" y="19" width="1" height="1" fill="#FFFFFF"/>
-    <!-- Mask/cloth -->
-    <rect x="26" y="24" width="12" height="3" fill="var(--leather-secondary)"/>
+  <!-- WEAPON LAYER -->
+  <g id="weapon">
+    <!-- Left dagger (forward slash) -->
+    <line x1="22" y1="30" x2="14" y2="22" stroke="var(--dagger-blade)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="22" y1="30" x2="14" y2="22" stroke="var(--dagger-highlight)" stroke-width="0.5" opacity="0.6"/>
+    <rect x="21" y="28" width="4" height="2" rx="0.5" fill="var(--dagger-guard)" transform="rotate(-45, 23, 29)"/>
+    <rect x="22" y="30" width="2" height="4" rx="0.5" fill="var(--dagger-handle)" transform="rotate(-45, 23, 32)"/>
+    <!-- Right dagger (trailing) -->
+    <line x1="76" y1="30" x2="84" y2="24" stroke="var(--dagger-blade)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="76" y1="30" x2="84" y2="24" stroke="var(--dagger-highlight)" stroke-width="0.5" opacity="0.6"/>
+    <rect x="74" y="28" width="4" height="2" rx="0.5" fill="var(--dagger-guard)" transform="rotate(40, 76, 29)"/>
+    <rect x="75" y="30" width="2" height="4" rx="0.5" fill="var(--dagger-handle)" transform="rotate(40, 76, 32)"/>
   </g>
 
-  <!-- LEFT DAGGER -->
-  <g id="dagger-left">
-    <!-- Blade -->
-    <polygon points="8,38 12,38 10,28" fill="var(--dagger-blade)"/>
-    <!-- Blade highlight -->
-    <polygon points="9,37 10,37 10,30" fill="var(--dagger-highlight)"/>
-    <!-- Guard -->
-    <rect x="6" y="38" width="8" height="2" rx="1" fill="var(--dagger-handle)"/>
-    <!-- Handle -->
-    <rect x="8" y="40" width="4" height="6" fill="var(--dagger-handle)"/>
-    <!-- Pommel -->
-    <circle cx="10" cy="48" r="2" fill="#666"/>
-  </g>
+  <!-- Slash trail effect -->
+  <path d="M18,18 Q22,28 28,34" fill="none" stroke="#E0E0E0" stroke-width="1" opacity="0.3"/>
+  <path d="M16,22 Q20,30 26,36" fill="none" stroke="#E0E0E0" stroke-width="0.6" opacity="0.2"/>
 
-  <!-- RIGHT DAGGER -->
-  <g id="dagger-right">
-    <!-- Blade -->
-    <polygon points="52,38 56,38 54,28" fill="var(--dagger-blade)"/>
-    <!-- Blade highlight -->
-    <polygon points="53,37 54,37 54,30" fill="var(--dagger-highlight)"/>
-    <!-- Guard -->
-    <rect x="50" y="38" width="8" height="2" rx="1" fill="var(--dagger-handle)"/>
-    <!-- Handle -->
-    <rect x="52" y="40" width="4" height="6" fill="var(--dagger-handle)"/>
-    <!-- Pommel -->
-    <circle cx="54" cy="48" r="2" fill="#666"/>
+  <!-- HEAD LAYER -->
+  <g id="head">
+    <!-- Hood (down, on shoulders) -->
+    <path d="M38,32 Q38,20 48,18 Q58,20 58,32 L56,36 Q48,38 40,36 Z" fill="var(--hood)"/>
+    <path d="M42,22 Q48,19 54,22" fill="none" stroke="var(--hood-highlight)" stroke-width="1"/>
+
+    <!-- Face -->
+    <ellipse cx="48" cy="28" rx="8" ry="8.5" fill="var(--skin)"/>
+
+    <!-- Hair peeking from hood -->
+    <path d="M40,24 Q42,20 48,19 Q54,20 56,24" fill="var(--hood)"/>
+    <!-- Messy bangs -->
+    <path d="M42,24 L40,22 L43,24" fill="var(--hair)"/>
+    <path d="M46,23 L45,20 L48,23" fill="var(--hair)"/>
+    <path d="M52,24 L54,21 L55,24" fill="var(--hair)"/>
+
+    <!-- Eyes (confident/sly, slightly narrowed) -->
+    <!-- Left eye -->
+    <ellipse cx="44" cy="28" rx="3" ry="2.2" fill="#fff"/>
+    <ellipse cx="44.5" cy="28" rx="2" ry="2" fill="var(--eye-color)"/>
+    <circle cx="45" cy="28" r="1.2" fill="#1a2a1a"/>
+    <circle cx="45.5" cy="27.2" r="0.7" fill="#fff"/>
+    <circle cx="44" cy="28.8" r="0.3" fill="#fff"/>
+    <!-- Right eye -->
+    <ellipse cx="52" cy="28" rx="3" ry="2.2" fill="#fff"/>
+    <ellipse cx="52.5" cy="28" rx="2" ry="2" fill="var(--eye-color)"/>
+    <circle cx="53" cy="28" r="1.2" fill="#1a2a1a"/>
+    <circle cx="53.5" cy="27.2" r="0.7" fill="#fff"/>
+    <circle cx="52" cy="28.8" r="0.3" fill="#fff"/>
+
+    <!-- Eyebrows (cocky/raised) -->
+    <path d="M41,25.5 Q43,24.5 46,25.5" fill="none" stroke="var(--hood)" stroke-width="1" stroke-linecap="round"/>
+    <path d="M50,25.5 Q53,24 55,25" fill="none" stroke="var(--hood)" stroke-width="1" stroke-linecap="round"/>
+
+    <!-- Nose -->
+    <path d="M48,29.5 L47.5,31" stroke="var(--skin-shadow)" stroke-width="0.7" stroke-linecap="round"/>
+
+    <!-- Mouth (confident smirk) -->
+    <path d="M45,33 Q48,34.5 51,32.5" fill="none" stroke="#AA8070" stroke-width="0.8" stroke-linecap="round"/>
+
+    <!-- Small scar on cheek -->
+    <line x1="53" y1="30" x2="55" y2="32" stroke="var(--skin-shadow)" stroke-width="0.5" opacity="0.6"/>
   </g>
 </svg>
