@@ -45,17 +45,17 @@ export function getNonce(): string {
 function getWebviewBasePath(extensionUri: vscode.Uri): string {
   const extensionPath = extensionUri.fsPath;
 
-  // In production, compiled JS files are in 'out' directory
-  // But template files (html, css, js) stay in src/webview
-  // So we always look in src/webview for template files
-  const srcPath = path.join(extensionPath, 'src', 'webview');
+  // In production (installed extension), static assets are copied to out/webview
+  // In development, src/webview also works since the source tree is present
+  // Check out/webview first since it works in both environments
+  const outPath = path.join(extensionPath, 'out', 'webview');
 
-  if (fs.existsSync(srcPath)) {
-    return srcPath;
+  if (fs.existsSync(outPath)) {
+    return outPath;
   }
 
-  // Fallback to out directory if src doesn't exist (shouldn't happen normally)
-  return path.join(extensionPath, 'out', 'webview');
+  // Fallback to src directory for development
+  return path.join(extensionPath, 'src', 'webview');
 }
 
 /**

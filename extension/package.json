@@ -3,7 +3,7 @@
   "displayName": "GitRPG",
   "description": "Turn your coding into an RPG - earn XP, level up characters, battle friends!",
   "icon": "media/icon.png",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -116,7 +116,8 @@
   "publisher": "HivinDiyagama",
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "copy-webview": "cp src/webview/dashboard/template.html src/webview/dashboard/styles.css src/webview/dashboard/script.js out/webview/dashboard/ && cp src/webview/sidebar/template.html src/webview/sidebar/styles.css src/webview/sidebar/script.js out/webview/sidebar/",
+    "compile": "tsc -p ./ && npm run copy-webview",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
     "test": "vitest run"
