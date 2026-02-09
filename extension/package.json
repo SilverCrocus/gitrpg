@@ -3,7 +3,7 @@
   "displayName": "GitRPG",
   "description": "Turn your coding into an RPG - earn XP, level up characters, battle friends!",
   "icon": "media/icon.png",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "engines": {
     "vscode": "^1.85.0"
   },
